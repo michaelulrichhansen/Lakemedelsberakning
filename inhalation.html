@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning – Inhalationer</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 480px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning<br>Inhalationer</h1>
+        <p id="question" style="font-weight:bold;"></p>
+        <button onclick="randomizeValues()">Slumpa värden</button>
+        <br><br>
+        <label for="answer">Ange ditt svar (heltal):</label>
+        <input type="number" id="answer" placeholder="Avrunda till heltal">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+        <p style="font-size:0.95em;color:#444;">Avrunda ditt svar till närmaste heltal. Rätt svar kommer också att avrundas till närmaste heltal.</p>
+    </div>
+    <script>
+        var X, Y, Z, missing;
+
+        function randomizeValues() {
+            X = Math.floor(Math.random() * (1000 - 10 + 1)) + 10;
+            Y = Math.floor(Math.random() * (50 - 1 + 1)) + 1;
+            Z = Math.floor(Math.random() * (10 - 1 + 1)) + 1;
+
+            // Ensure X is always greater than Y and Z
+            while (X <= Y || X <= Z) {
+                X = Math.floor(Math.random() * (1000 - 10 + 1)) + 10;
+            }
+
+            // Choose a random variable to hide
+            missing = Math.floor(Math.random() * 3);
+
+            var questionText = "En läkare ordinerar ett läkemedel på ";
+            if (missing == 0) {
+                questionText += "<b>X</b> mg. ";
+            } else {
+                questionText += X + " mg. ";
+            }
+            questionText += "Läkemedlet ger ";
+            if (missing == 1) {
+                questionText += "<b>Y</b> mg/inhalation. ";
+            } else {
+                questionText += Y + " mg/inhalation. ";
+            }
+            questionText += "Patienten ska ta ";
+            if (missing == 2) {
+                questionText += "<b>Z</b> antal inhalationer.";
+            } else {
+                questionText += Z + " antal inhalationer.";
+            }
+
+            document.getElementById("question").innerHTML = questionText;
+            document.getElementById("result").textContent = '';
+            document.getElementById("calculation").textContent = '';
+            document.getElementById("answer").value = '';
+        }
+
+        function checkAnswer() {
+            var answer = parseInt(document.getElementById("answer").value);
+            var correctAnswer, calculationText;
+
+            if (missing == 0) {
+                correctAnswer = Math.round(Y * Z);
+                calculationText = `${Y} mg/inhalation × ${Z} inhalationer = ${correctAnswer} mg`;
+            } else if (missing == 1) {
+                correctAnswer = Math.round(X / Z);
+                calculationText = `${X} mg ÷ ${Z} inhalationer = ${correctAnswer} mg/inhalation`;
+            } else {
+                correctAnswer = Math.round(X / Y);
+                calculationText = `${X} mg ÷ ${Y} mg/inhalation = ${correctAnswer} inhalationer`;
+            }
+
+            if (answer === correctAnswer) {
+                document.getElementById("result").textContent = "Rätt svar!";
+                document.getElementById("result").style.color = "#195";
+            } else {
+                document.getElementById("result").textContent = "Fel svar. Det rätta svaret är " + correctAnswer + ".";
+                document.getElementById("result").style.color = "#a33";
+            }
+
+            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
+        }
+
+        // Slumpa ett första problem vid sidladdning
+        window.onload = randomizeValues;
+    </script>
+</body>
+</html>
