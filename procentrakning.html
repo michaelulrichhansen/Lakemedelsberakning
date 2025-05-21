@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning – Procenträkning</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 530px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+        #formula { font-size: 0.97em; color: #666; background: #f0f0f8; border-radius: 7px; padding: 10px; margin-bottom: 12px;}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning<br>Procenträkning</h1>
+        <div id="formula">
+            <b>Grunder:</b><br>
+            <b>1 g/100 mL = 1 % (w/v)</b><br>
+            <b>1 g/100 g = 1 % (w/w)</b><br>
+            <b>1 mL/100 mL = 1 % (v/v)</b>
+        </div>
+        <p id="problem"></p>
+        <button onclick="randomizeCase()">Slumpa uppgift</button>
+        <br><br>
+        <label id="answerLabel" for="answer"></label>
+        <input type="text" id="answer" placeholder="">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+        <p style="font-size:0.95em;color:#444;">Svara med en decimal. Använd punkt som decimaltecken.</p>
+    </div>
+    <script>
+        let caseType, value, total, percent, correctAnswer, calcText;
+
+        function randomizeCase() {
+            // 0 = vikt/volym (% w/v), 1 = vikt/vikt (% w/w), 2 = volym/volym (% v/v)
+            caseType = Math.floor(Math.random() * 3);
+
+            if (caseType === 0) {
+                // Vikt/volym-procent: Hur många gram i X mL för Y %?
+                total = [100, 250, 500, 1000][Math.floor(Math.random() * 4)];
+                percent = (Math.floor(Math.random() * 19) + 1) / 10; // 0.1–2.0 %
+                correctAnswer = ((percent * total) / 100).toFixed(1);
+                calcText = `${percent} % = ${percent} g/100 mL ⇒ (${percent} g × ${total}/100) = ${correctAnswer} g`;
+                document.getElementById("problem").textContent =
+                    `Hur många gram läkemedel behövs för att blanda ${total} mL av en lösning med styrkan ${percent} % (w/v)?`;
+                document.getElementById("answerLabel").textContent = "Ange antal gram (en decimal):";
+                document.getElementById("answer").placeholder = "t.ex. 1.5";
+            } else if (caseType === 1) {
+                // Vikt/vikt-procent: Hur många gram i X g för Y %?
+                total = [100, 250, 500, 1000][Math.floor(Math.random() * 4)];
+                percent = (Math.floor(Math.random() * 19) + 1) / 10; // 0.1–2.0 %
+                correctAnswer = ((percent * total) / 100).toFixed(1);
+                calcText = `${percent} % = ${percent} g/100 g ⇒ (${percent} g × ${total}/100) = ${correctAnswer} g`;
+                document.getElementById("problem").textContent =
+                    `Hur många gram aktiv substans behövs för att blanda ${total} g salva med styrkan ${percent} % (w/w)?`;
+                document.getElementById("answerLabel").textContent = "Ange antal gram (en decimal):";
+                document.getElementById("answer").placeholder = "t.ex. 1.5";
+            } else {
+                // Volym/volym-procent: Hur många mL i X mL för Y %?
+                total = [100, 250, 500, 1000][Math.floor(Math.random() * 4)];
+                percent = (Math.floor(Math.random() * 19) + 1) / 10; // 0.1–2.0 %
+                correctAnswer = ((percent * total) / 100).toFixed(1);
+                calcText = `${percent} % = ${percent} mL/100 mL ⇒ (${percent} mL × ${total}/100) = ${correctAnswer} mL`;
+                document.getElementById("problem").textContent =
+                    `Hur många mL substans behövs för att blanda ${total} mL lösning med styrkan ${percent} % (v/v)?`;
+                document.getElementById("answerLabel").textContent = "Ange antal mL (en decimal):";
+                document.getElementById("answer").placeholder = "t.ex. 1.5";
+            }
+
+            document.getElementById("result").textContent = '';
+            document.getElementById("calculation").textContent = '';
+            document.getElementById("answer").value = '';
+        }
+
+        function checkAnswer() {
+            let userInput = document.getElementById("answer").value.replace(",", ".").trim();
+            let user = Number(parseFloat(userInput).toFixed(1));
+            let correct = Number(correctAnswer);
+
+            let isCorrect = (user === correct);
+
+            if (isCorrect) {
+                document.getElementById("result").textContent = "Rätt svar!";
+                document.getElementById("result").style.color = "#195";
+            } else {
+                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${correctAnswer}.`;
+                document.getElementById("result").style.color = "#a33";
+            }
+            document.getElementById("calculation").textContent = `Beräkning: ${calcText}`;
+        }
+
+        // Starta med en slumpad fråga direkt
+        window.onload = randomizeCase;
+    </script>
+</body>
+</html>
