@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning – Kroppsyta</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 480px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning<br>Kroppsyta</h1>
+        <p id="problem"></p>
+        <button onclick="randomizeValues()">Slumpa värden</button>
+        <br><br>
+        <label id="answerLabel" for="answer"></label>
+        <input type="text" id="answer" placeholder="">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+    </div>
+    <script>
+        let X, Y, Z, missingVariable, expectedDecimals;
+
+        function randomizeValues() {
+            var choice = Math.floor(Math.random() * 3);
+
+            Y = Math.floor(Math.random() * 50) + 1; // Dos per m2
+            Z = Number((Math.random() * 2 + 1).toFixed(1)); // Kroppsyta i m2
+            X = Math.round(Y * Z); // Total dos i mg
+
+            let problemText = '';
+            let labelText = '';
+            let placeholderText = '';
+
+            switch(choice) {
+                case 0: // X saknas, svar = heltal
+                    missingVariable = 'X';
+                    expectedDecimals = 0;
+                    problemText = `En läkare ordinerar ett läkemedel på <b>X</b> mg. Enligt FASS ska läkemedlet ges ${Y} mg/m². Patienten har en kroppsyta på ${Z} m².`;
+                    labelText = 'Ange ditt svar (heltal):';
+                    placeholderText = 'Heltal';
+                    break;
+                case 1: // Y saknas, svar = två decimaler
+                    missingVariable = 'Y';
+                    expectedDecimals = 2;
+                    problemText = `En läkare ordinerar ett läkemedel på ${X} mg. Enligt FASS ska läkemedlet ges <b>Y</b> mg/m². Patienten har en kroppsyta på ${Z} m².`;
+                    labelText = 'Ange ditt svar (två decimaler):';
+                    placeholderText = 't.ex. 12.34';
+                    break;
+                case 2: // Z saknas, svar = en decimal
+                    missingVariable = 'Z';
+                    expectedDecimals = 1;
+                    problemText = `En läkare ordinerar ett läkemedel på ${X} mg. Enligt FASS ska läkemedlet ges ${Y} mg/m². Patienten har en kroppsyta på <b>Z</b> m².`;
+                    labelText = 'Ange ditt svar (en decimal):';
+                    placeholderText = 't.ex. 1.2';
+                    break;
+            }
+            document.getElementById("problem").innerHTML = problemText;
+            document.getElementById("result").textContent = '';
+            document.getElementById("calculation").textContent = '';
+            document.getElementById("answer").value = '';
+            document.getElementById("answerLabel").textContent = labelText;
+            document.getElementById("answer").placeholder = placeholderText;
+        }
+
+        function checkAnswer() {
+            let studentInput = document.getElementById("answer").value.replace(",", ".");
+            let correctAnswer;
+            let calculationText = "";
+
+            if(missingVariable === 'X') {
+                correctAnswer = Math.round(Y * Z);
+                calculationText = `${Y} mg/m² × ${Z} m² = ${correctAnswer} mg`;
+            } else if(missingVariable === 'Y') {
+                correctAnswer = (X / Z).toFixed(2);
+                calculationText = `${X} mg ÷ ${Z} m² = ${correctAnswer} mg/m²`;
+            } else {
+                correctAnswer = (X / Y).toFixed(1);
+                calculationText = `${X} mg ÷ ${Y} mg/m² = ${correctAnswer} m²`;
+            }
+
+            let isCorrect;
+            if (expectedDecimals === 0) {
+                isCorrect = (parseInt(studentInput) === correctAnswer);
+            } else {
+                // Jämför som sträng efter avrundning för decimalprecision
+                isCorrect = (Number(studentInput).toFixed(expectedDecimals) === correctAnswer);
+            }
+
+            if(isCorrect) {
+                document.getElementById("result").textContent = "Rätt svar!";
+                document.getElementById("result").style.color = "#195";
+            } else {
+                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${correctAnswer}.`;
+                document.getElementById("result").style.color = "#a33";
+            }
+
+            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
+        }
+
+        // Slumpa ett första problem vid sidladdning
+        window.onload = randomizeValues;
+    </script>
+</body>
+</html>
