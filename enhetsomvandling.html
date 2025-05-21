@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Läkemedelsberäkning – Enhetsomvandling</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+    h1 { color: #195; }
+    .card { background: #fff; padding: 32px; max-width: 450px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+    label, input, button { font-size: 1rem; margin-top: 12px; }
+    input[type="number"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+    button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+    #response { font-weight: bold; margin-top: 16px;}
+    #conversionSteps { color: #555; background: #f2f2f2; padding: 10px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Läkemedelsberäkning<br>Enhetsomvandling</h1>
+    <p id="question"></p>
+    <button onclick="generateValues()">Slumpa värden</button>
+    <input type="hidden" id="value">
+    <input type="hidden" id="fromUnit">
+    <input type="hidden" id="toUnit">
+    <br><br>
+    <label for="userAnswer">Ange ditt svar:</label>
+    <input type="number" id="userAnswer" placeholder="Skriv svaret">
+    <button onclick="checkAnswer()">Kontrollera svar</button>
+    <p id="response"></p>
+    <pre id="conversionSteps" style="display: none;"></pre>
+  </div>
+  <script>
+    const units = {
+      'g': { 'mg': 1000, 'ug': 1000000 },
+      'mg': { 'g': 1/1000, 'ug': 1000 },
+      'ug': { 'mg': 1/1000, 'g': 1/1000000 },
+      'L': { 'mL': 1000, 'uL': 1000000 },
+      'mL': { 'L': 1/1000, 'uL': 1000 },
+      'uL': { 'mL': 1/1000, 'L': 1/1000000 },
+      'mol': { 'mmol': 1000, 'umol': 1000000 },
+      'mmol': { 'mol': 1/1000, 'umol': 1000 },
+      'umol': { 'mmol': 1/1000, 'mol': 1/1000000 }
+    };
+
+    function generateValues() {
+      const unitKeys = Object.keys(units);
+      const fromUnit = unitKeys[Math.floor(Math.random() * unitKeys.length)];
+      const toUnits = Object.keys(units[fromUnit]);
+      const toUnit = toUnits[Math.floor(Math.random() * toUnits.length)];
+      const value = (Math.random() * 1000).toFixed(3);
+      document.getElementById('question').textContent = `Om du har ${value} ${fromUnit}, hur mycket är det i ${toUnit}?`;
+      document.getElementById('userAnswer').setAttribute('placeholder', 'Ange ditt svar i ' + toUnit);
+      document.getElementById('value').value = value;
+      document.getElementById('fromUnit').value = fromUnit;
+      document.getElementById('toUnit').value = toUnit;
+      document.getElementById('response').textContent = '';
+      document.getElementById('conversionSteps').style.display = 'none';
+      document.getElementById('userAnswer').value = '';
+    }
+
+    function checkAnswer() {
+      const value = parseFloat(document.getElementById('value').value);
+      const fromUnit = document.getElementById('fromUnit').value;
+      const toUnit = document.getElementById('toUnit').value;
+      const conversionFactor = units[fromUnit][toUnit];
+      const result = (value * conversionFactor).toFixed(6);
+      const userInput = document.getElementById('userAnswer').value.replace(',', '.');
+      const userAnswer = parseFloat(userInput).toFixed(6);
+      const correct = userAnswer === result;
+      const responseText = correct ? 'Rätt svar!' : `Fel svar. Det rätta svaret är ${result} ${toUnit}.`;
+
+      document.getElementById('response').textContent = responseText;
+      document.getElementById('response').style.color = correct ? "#195" : "#a33";
+
+      let calculation;
+      if (conversionFactor > 1) {
+        calculation = `${value} ${fromUnit} × ${conversionFactor} ${toUnit}/${fromUnit} = ${result} ${toUnit}`;
+      } else {
+        calculation = `${value} ${fromUnit} ÷ ${1/conversionFactor} ${fromUnit}/${toUnit} = ${result} ${toUnit}`;
+      }
+
+      document.getElementById('conversionSteps').textContent = "Beräkning: " + calculation;
+      document.getElementById('conversionSteps').style.display = 'block';
+    }
+
+    // Slumpa ett första värde när sidan laddas
+    window.onload = generateValues;
+  </script>
+</body>
+</html>
