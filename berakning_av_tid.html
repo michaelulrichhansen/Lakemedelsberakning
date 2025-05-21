@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning – Omvandling av tid</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 480px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning<br>Omvandling av tid</h1>
+        <p id="problem"></p>
+        <button onclick="generateProblem()">Slumpa värden</button>
+        <br><br>
+        <label id="answerLabel" for="answer"></label>
+        <input type="text" id="answer" placeholder="">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+    </div>
+    <script>
+        let value, fromUnit, toUnit, correctAnswer, calcText, decimals;
+
+        function generateProblem() {
+            if (Math.random() > 0.5) {
+                // timmar till minuter
+                fromUnit = "timmar";
+                toUnit = "minuter";
+                value = Math.floor(Math.random() * 10) + 1; // 1-10 timmar
+                correctAnswer = value * 60;
+                calcText = `${value} timmar × 60 = ${correctAnswer} minuter`;
+                decimals = 0;
+                document.getElementById("answerLabel").textContent = "Ange ditt svar (heltal):";
+                document.getElementById("answer").placeholder = "Heltal";
+            } else {
+                // minuter till timmar
+                fromUnit = "minuter";
+                toUnit = "timmar";
+                value = Math.floor(Math.random() * 951) + 10; // 10-960 minuter
+                correctAnswer = (value / 60).toFixed(2);
+                calcText = `${value} minuter ÷ 60 = ${correctAnswer} timmar`;
+                decimals = 2;
+                document.getElementById("answerLabel").textContent = "Ange ditt svar (två decimaler):";
+                document.getElementById("answer").placeholder = "Ex: 2.50";
+            }
+            document.getElementById("problem").textContent = `Hur mycket är ${value} ${fromUnit} uttryckt i ${toUnit}?`;
+            document.getElementById("result").textContent = '';
+            document.getElementById("calculation").textContent = '';
+            document.getElementById("answer").value = '';
+        }
+
+        function checkAnswer() {
+            let user = document.getElementById("answer").value.replace(",", ".").trim();
+            let userAnswer;
+            if (decimals === 0) {
+                userAnswer = parseInt(user, 10);
+            } else {
+                userAnswer = Number(parseFloat(user).toFixed(2));
+            }
+
+            let isCorrect;
+            if (decimals === 0) {
+                isCorrect = (userAnswer === correctAnswer);
+            } else {
+                isCorrect = (userAnswer === Number(correctAnswer));
+            }
+
+            if (isCorrect) {
+                document.getElementById("result").textContent = "Rätt svar!";
+                document.getElementById("result").style.color = "#195";
+            } else {
+                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${correctAnswer}.`;
+                document.getElementById("result").style.color = "#a33";
+            }
+            document.getElementById("calculation").textContent = `Beräkning: ${calcText}`;
+        }
+
+        // Skapa ett första problem när sidan laddas
+        window.onload = generateProblem;
+    </script>
+</body>
+</html>
