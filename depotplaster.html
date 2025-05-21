@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning – Depotplåster</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 500px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning<br>Depotplåster</h1>
+        <p id="problem"></p>
+        <button onclick="randomizeValues()">Slumpa värden</button>
+        <br><br>
+        <label id="answerLabel" for="answer"></label>
+        <input type="number" id="answer" placeholder="Avrunda till heltal">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+        <p style="font-size:0.95em;color:#444;">Avrunda ditt svar till närmaste heltal. Rätt svar kommer också att avrundas till närmaste heltal.</p>
+    </div>
+    <script>
+        let X, Y, Z, missing;
+
+        function randomizeValues() {
+            X = Math.floor(Math.random() * 87) + 10; // styrka ug/24h
+            Y = Math.floor(Math.random() * 47) + 2;  // antal timmar
+            Z = Math.round((X / 24) * Y); // totalt intagen mängd ug
+
+            // Välj vilken variabel som ska döljas: 0=X, 1=Y, 2=Z
+            missing = Math.floor(Math.random() * 3);
+
+            let problemText = "En patient är ordinerad ett depotplåster med styrkan ";
+            if (missing === 0) {
+                problemText += "<b>X</b>";
+            } else {
+                problemText += X;
+            }
+            problemText += " ug/24h. Plåstret har suttit på patienten i ";
+            if (missing === 1) {
+                problemText += "<b>Y</b>";
+            } else {
+                problemText += Y;
+            }
+            problemText += " timmar. Patienten har totalt fått i sig ";
+            if (missing === 2) {
+                problemText += "<b>Z</b>";
+            } else {
+                problemText += Z;
+            }
+            problemText += " ug av läkemedlet.";
+
+            document.getElementById("problem").innerHTML = problemText;
+
+            // Svarslabel och placeholder beroende på vad som saknas
+            let svar = missing === 0 ? "X (styrka i ug/24h)" : missing === 1 ? "Y (timmar)" : "Z (totalt ug)";
+            document.getElementById("answerLabel").textContent = `Ange ditt svar för ${svar}:`;
+            document.getElementById("answer").value = '';
+            document.getElementById("result").textContent = '';
+            document.getElementById("calculation").textContent = '';
+        }
+
+        function checkAnswer() {
+            let studentAnswer = parseInt(document.getElementById("answer").value);
+            let correctAnswer, calculationText;
+
+            if (missing === 0) {
+                // X = Z * 24 / Y
+                correctAnswer = Math.round(Z * 24 / Y);
+                calculationText = `${Z} ug × 24 ÷ ${Y} timmar = ${correctAnswer} ug/24h`;
+            } else if (missing === 1) {
+                // Y = Z * 24 / X
+                correctAnswer = Math.round(Z * 24 / X);
+                calculationText = `${Z} ug × 24 ÷ ${X} ug/24h = ${correctAnswer} timmar`;
+            } else {
+                // Z = X / 24 × Y
+                correctAnswer = Math.round(X / 24 * Y);
+                calculationText = `${X} ug/24h ÷ 24 × ${Y} timmar = ${correctAnswer} ug`;
+            }
+
+            if (studentAnswer === correctAnswer) {
+                document.getElementById("result").textContent = "Rätt svar!";
+                document.getElementById("result").style.color = "#195";
+            } else {
+                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${correctAnswer}.`;
+                document.getElementById("result").style.color = "#a33";
+            }
+            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
+        }
+
+        // Slumpa ett första problem vid sidladdning
+        window.onload = randomizeValues;
+    </script>
+</body>
+</html>
