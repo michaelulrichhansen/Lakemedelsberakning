@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning med Avrundningsregler</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 400px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button, select { font-size: 1rem; margin-top: 12px; }
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+        .flex-row { display: flex; align-items: center; gap: 8px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning<br>Avrundningsregler</h1>
+        <p>
+            Slumpa ett värde på X och svara utifrån instruktionen för hur svaret ska avrundas.<br>
+            Skriv ditt avrundade svar i rutan och kontrollera!
+        </p>
+        <button onclick="slumpaVarde()">Slumpa värde</button>
+        <br><br>
+        <div id="problem" class="flex-row">
+            <span id="x">Tryck på 'Slumpa värde' för att börja.</span>
+        </div>
+        <br>
+        <p id="avrundningsinstruktion" style="font-weight:bold;"></p>
+        <label for="studentAnswer">Ange ditt svar:</label>
+        <input type="text" id="studentAnswer" placeholder="Ditt svar">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+    </div>
+    <script>
+        let currentX = null;
+        let currentType = null;
+
+        const avrundningar = [
+            {typ: 'heltal', instruktion: 'Runda av till heltal'},
+            {typ: 'enDecimal', instruktion: 'Runda av till en decimal'},
+            {typ: 'tvaDecimaler', instruktion: 'Runda av till två decimaler'},
+            {typ: 'treDecimaler', instruktion: 'Runda av till tre decimaler'}
+        ];
+
+        function slumpaVarde() {
+            currentX = (Math.random() * 10).toFixed(4);
+            document.getElementById('x').textContent = 'X = ' + currentX;
+            document.getElementById('result').textContent = '';
+            document.getElementById('calculation').textContent = '';
+            document.getElementById('studentAnswer').value = '';
+            // Slumpa avrundningstyp
+            const randIndex = Math.floor(Math.random() * avrundningar.length);
+            currentType = avrundningar[randIndex].typ;
+            document.getElementById('avrundningsinstruktion').textContent = avrundningar[randIndex].instruktion;
+        }
+
+        function checkAnswer() {
+            if (currentX === null || currentType === null) return;
+
+            let y = document.getElementById('studentAnswer').value.replace(',', '.');
+            let correctAnswer;
+            let explanation = '';
+
+            let x = parseFloat(currentX);
+
+            switch (currentType) {
+                case 'heltal':
+                    correctAnswer = Math.round(x);
+                    explanation = `Runda av ${x} till närmaste heltal = ${correctAnswer}`;
+                    break;
+                case 'enDecimal':
+                    correctAnswer = x.toFixed(1);
+                    explanation = `Runda av ${x} till en decimal = ${correctAnswer}`;
+                    break;
+                case 'tvaDecimaler':
+                    correctAnswer = x.toFixed(2);
+                    explanation = `Runda av ${x} till två decimaler = ${correctAnswer}`;
+                    break;
+                case 'treDecimaler':
+                    correctAnswer = x.toFixed(3);
+                    explanation = `Runda av ${x} till tre decimaler = ${correctAnswer}`;
+                    break;
+                default:
+                    correctAnswer = x;
+            }
+
+            // Kolla om svaret är rätt (tillåter både tal och strängmatchning)
+            let isCorrect = (y == correctAnswer);
+
+            if (isCorrect) {
+                document.getElementById('result').textContent = "Rätt svar!";
+                document.getElementById('result').style.color = "#195";
+            } else {
+                document.getElementById('result').textContent = `Fel svar. Rätt svar är ${correctAnswer}.`;
+                document.getElementById('result').style.color = "#a33";
+            }
+            document.getElementById('calculation').textContent = `Beräkning: ${explanation}`;
+        }
+
+        // Slumpa ett första värde när sidan laddas
+        window.onload = slumpaVarde;
+    </script>
+</body>
+</html>
