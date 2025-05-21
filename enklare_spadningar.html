@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning – Enklare spädningar</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 520px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning<br>Enklare spädningar</h1>
+        <p id="question"></p>
+        <button onclick="randomizeValues()">Slumpa värden</button>
+        <br><br>
+        <label for="answer">Ange mängd spädningsvätska (avrunda till heltal):</label>
+        <input type="number" id="answer" placeholder="Heltal">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+        <p style="font-size:0.95em;color:#444;">Beräkna hur mycket spädningsvätska som behövs för att späda läkemedlet till den nya styrkan.</p>
+    </div>
+    <script>
+        let X, Y, Z;
+
+        function randomizeValues() {
+            do {
+                X = Math.floor(Math.random() * 100) + 20;  // ursprunglig styrka, lite högre lägsta för meningsfulla tal
+                Y = Math.floor(Math.random() * 50) + 1;    // ny styrka
+            } while (X <= 2 * Y);
+            Z = Math.floor(Math.random() * 100) + 1;       // mängd läkemedel
+
+            document.getElementById('question').textContent =
+                `Du ska späda ett läkemedel med styrkan ${X} mg/mL till en ny styrka på ${Y} mg/mL. Läkemedlet finns i en mängd av ${Z} mL. Hur stor mängd spädningsvätska (i mL) behövs för att späda läkemedlet?`;
+
+            document.getElementById('result').textContent = '';
+            document.getElementById('calculation').textContent = '';
+            document.getElementById('answer').value = '';
+        }
+
+        function checkAnswer() {
+            const studentAnswer = parseInt(document.getElementById('answer').value, 10);
+            // Formeln: (X * Z / Y) - Z = mängd spädningsvätska
+            const correctAnswer = Math.round(((X * Z) / Y) - Z);
+            const calcText = `Beräkning: (${X} mg/mL × ${Z} mL) ÷ ${Y} mg/mL - ${Z} mL = ${correctAnswer} mL`;
+
+            if (studentAnswer === correctAnswer) {
+                document.getElementById('result').textContent = "Rätt svar!";
+                document.getElementById('result').style.color = "#195";
+            } else {
+                document.getElementById('result').textContent = `Fel svar. Det rätta svaret är ${correctAnswer} mL.`;
+                document.getElementById('result').style.color = "#a33";
+            }
+            document.getElementById('calculation').textContent = calcText;
+        }
+
+        // Starta med en slumpad fråga direkt
+        window.onload = randomizeValues;
+    </script>
+</body>
+</html>
