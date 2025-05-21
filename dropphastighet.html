@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning – Dropphastighet</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 520px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning<br>Dropphastighet</h1>
+        <p id="problemText"></p>
+        <button onclick="randomizeValues()">Slumpa värden</button>
+        <br><br>
+        <label for="studentAnswer" id="answerLabel"></label>
+        <input type="number" id="studentAnswer" placeholder="Avrunda till heltal">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+        <p style="font-size:0.95em;color:#444;">Avrunda ditt svar till närmaste heltal.</p>
+    </div>
+    <script>
+        let x, y, z, p;
+        let unknownValue;
+
+        function randomizeValues() {
+            let randomIndex = Math.floor(Math.random() * 3);
+            unknownValue = ['X', 'Y', 'Z'][randomIndex];
+
+            x = Math.floor(Math.random() * 1901) + 100; // ml (100–2000)
+            y = Math.floor(Math.random() * 119) + 2;    // droppar/min (2–120)
+            p = Math.floor(Math.random() * 29) + 2;     // droppar/ml (2–30)
+            z = Math.round((x * p) / y);                // tid i min
+
+            let problemText = `En läkare ordinerar ett infusionsdropp på `;
+            problemText += (unknownValue === 'X') ? "<b>X</b>" : x;
+            problemText += ` milliliter, med en dropphastighet på `;
+            problemText += (unknownValue === 'Y') ? "<b>Y</b>" : y;
+            problemText += ` droppar/minut, och som ska gå in på `;
+            problemText += (unknownValue === 'Z') ? "<b>Z</b>" : z;
+            problemText += ` minuter. Infusionsaggregatet ger ${p} droppar per milliliter.`;
+
+            document.getElementById('problemText').innerHTML = problemText + "<br><i>Avrunda till heltal.</i>";
+
+            // Label beroende på vad som ska beräknas
+            if (unknownValue === 'X') {
+                document.getElementById('answerLabel').textContent = "Ange volym (milliliter):";
+            } else if (unknownValue === 'Y') {
+                document.getElementById('answerLabel').textContent = "Ange dropphastighet (droppar/minut):";
+            } else {
+                document.getElementById('answerLabel').textContent = "Ange infusionstid (minuter):";
+            }
+
+            document.getElementById('studentAnswer').value = '';
+            document.getElementById('result').textContent = '';
+            document.getElementById('calculation').textContent = '';
+        }
+
+        function checkAnswer() {
+            let studentAnswer = parseInt(document.getElementById('studentAnswer').value);
+            let correctAnswer, calculationText;
+
+            if (unknownValue === 'X') {
+                correctAnswer = Math.round(z * y / p);
+                calculationText = `${z} min × ${y} droppar/min ÷ ${p} droppar/ml = ${correctAnswer} ml`;
+            } else if (unknownValue === 'Y') {
+                correctAnswer = Math.round((x * p) / z);
+                calculationText = `${x} ml × ${p} droppar/ml ÷ ${z} min = ${correctAnswer} droppar/min`;
+            } else {
+                correctAnswer = Math.round((x * p) / y);
+                calculationText = `${x} ml × ${p} droppar/ml ÷ ${y} droppar/min = ${correctAnswer} min`;
+            }
+
+            if (studentAnswer === correctAnswer) {
+                document.getElementById('result').textContent = "Rätt svar!";
+                document.getElementById('result').style.color = "#195";
+            } else {
+                document.getElementById('result').textContent = `Fel svar. Rätt svar är ${correctAnswer}.`;
+                document.getElementById('result').style.color = "#a33";
+            }
+
+            document.getElementById('calculation').textContent = `Beräkning: ${calculationText}`;
+        }
+
+        // Visa första problemet direkt vid sidladdning
+        window.onload = randomizeValues;
+    </script>
+</body>
+</html>
