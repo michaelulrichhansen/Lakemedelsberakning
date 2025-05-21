@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning – Injektionshastighet</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 520px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning<br>Injektionshastighet</h1>
+        <p id="problem"></p>
+        <button onclick="randomizeCase()">Slumpa värden</button>
+        <br><br>
+        <label id="answerLabel" for="answer"></label>
+        <input type="text" id="answer" placeholder="">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+        <p style="font-size:0.95em;color:#444;">Avrunda svaret till två decimaler. Punkt som decimaltecken.</p>
+    </div>
+    <script>
+        let mgPerMl, rateValue, direction, correctAnswer, calcText;
+
+        function randomizeCase() {
+            mgPerMl = [5, 10, 25, 50][Math.floor(Math.random() * 4)]; // styrka
+            if (Math.random() > 0.5) {
+                // Från mg/min till mL/min
+                direction = "mg2ml";
+                rateValue = Math.floor(Math.random() * 76) + 5; // 5-80 mg/min
+                correctAnswer = (rateValue / mgPerMl).toFixed(2);
+                calcText = `${rateValue} mg/min ÷ ${mgPerMl} mg/mL = ${correctAnswer} mL/min`;
+                document.getElementById("problem").textContent =
+                    `En patient ska ha ${rateValue} mg läkemedel per minut. Läkemedlets styrka är ${mgPerMl} mg/mL. Hur många mL/min motsvarar detta?`;
+                document.getElementById("answerLabel").textContent = "Ange antal mL/min (två decimaler):";
+                document.getElementById("answer").placeholder = "t.ex. 0.80";
+            } else {
+                // Från mL/min till mg/min
+                direction = "ml2mg";
+                rateValue = (Math.random() * 1.9 + 0.1).toFixed(2); // 0.10–2.00 mL/min
+                correctAnswer = (rateValue * mgPerMl).toFixed(2);
+                calcText = `${rateValue} mL/min × ${mgPerMl} mg/mL = ${correctAnswer} mg/min`;
+                document.getElementById("problem").textContent =
+                    `En patient får ${rateValue} mL läkemedel per minut. Läkemedlets styrka är ${mgPerMl} mg/mL. Hur många mg/min motsvarar detta?`;
+                document.getElementById("answerLabel").textContent = "Ange antal mg/min (två decimaler):";
+                document.getElementById("answer").placeholder = "t.ex. 40.00";
+            }
+            document.getElementById("result").textContent = '';
+            document.getElementById("calculation").textContent = '';
+            document.getElementById("answer").value = '';
+        }
+
+        function checkAnswer() {
+            let userInput = document.getElementById("answer").value.replace(",", ".").trim();
+            let userAnswer = Number(parseFloat(userInput).toFixed(2));
+            let isCorrect = (userAnswer === Number(correctAnswer));
+
+            if (isCorrect) {
+                document.getElementById("result").textContent = "Rätt svar!";
+                document.getElementById("result").style.color = "#195";
+            } else {
+                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${correctAnswer}.`;
+                document.getElementById("result").style.color = "#a33";
+            }
+            document.getElementById("calculation").textContent = `Beräkning: ${calcText}`;
+        }
+
+        // Starta med en slumpad fråga direkt
+        window.onload = randomizeCase;
+    </script>
+</body>
+</html>
