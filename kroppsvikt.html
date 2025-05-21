@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning – Kroppsvikt</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 480px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="number"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning<br>Kroppsvikt</h1>
+        <p id="problem">En läkare ordinerar ett läkemedel på X mg. Enligt FASS ska läkemedlet ges Y mg/kg kroppsvikt. Patienten väger Z kg.</p>
+        <button onclick="randomizeValues()">Slumpa värden</button>
+        <br><br>
+        <label for="answer">Ange ditt svar (heltal):</label>
+        <input type="number" id="answer" placeholder="Skriv ditt svar här (heltal)">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+    </div>
+    <script>
+        let X, Y, Z;
+        let missingValue;
+
+        function randomizeValues() {
+            X = Math.floor(Math.random() * (2000 - 100) + 100);  // Dos mg (heltal)
+            Y = Math.floor(Math.random() * (50 - 1) + 1);        // mg/kg (heltal)
+            Z = Math.floor(Math.random() * (150 - 1) + 1);       // kg (heltal)
+
+            const missingValueOptions = ['X', 'Y', 'Z'];
+            missingValue = missingValueOptions[Math.floor(Math.random() * missingValueOptions.length)];
+
+            let problemText = `En läkare ordinerar ett läkemedel på `;
+            problemText += (missingValue === 'X') ? '<b>X</b>' : `${X}`;
+            problemText += ` mg. Enligt FASS ska läkemedlet ges `;
+            problemText += (missingValue === 'Y') ? '<b>Y</b>' : `${Y}`;
+            problemText += ` mg/kg kroppsvikt. Patienten väger `;
+            problemText += (missingValue === 'Z') ? '<b>Z</b>' : `${Z}`;
+            problemText += ` kg.`;
+
+            document.getElementById("problem").innerHTML = problemText;
+            document.getElementById("result").textContent = '';
+            document.getElementById("calculation").textContent = '';
+            document.getElementById("answer").value = '';
+        }
+
+        function checkAnswer() {
+            let studentAnswer = parseInt(document.getElementById("answer").value);
+            let correctAnswer;
+            let calculationText = "";
+
+            if (missingValue === 'X') {
+                correctAnswer = Math.round(Y * Z);
+                calculationText = `${Y} mg/kg × ${Z} kg = ${correctAnswer} mg`;
+            } else if (missingValue === 'Y') {
+                correctAnswer = Math.round(X / Z);
+                calculationText = `${X} mg ÷ ${Z} kg = ${correctAnswer} mg/kg`;
+            } else if (missingValue === 'Z') {
+                correctAnswer = Math.round(X / Y);
+                calculationText = `${X} mg ÷ ${Y} mg/kg = ${correctAnswer} kg`;
+            }
+
+            if (studentAnswer === correctAnswer) {
+                document.getElementById("result").textContent = "Rätt svar!";
+                document.getElementById("result").style.color = "#195";
+            } else {
+                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${correctAnswer}.`;
+                document.getElementById("result").style.color = "#a33";
+            }
+
+            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
+        }
+
+        // Slumpa ett första problem vid sidladdning
+        window.onload = randomizeValues;
+    </script>
+</body>
+</html>
