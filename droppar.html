@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning – Droppar</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 480px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning<br>Droppar</h1>
+        <p id="problem"></p>
+        <button onclick="randomizeValues()">Slumpa värden</button>
+        <br><br>
+        <label id="answerLabel" for="answer"></label>
+        <input type="number" id="answer" placeholder="Avrunda till heltal">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+        <p style="font-size:0.95em;color:#444;">Avrunda ditt svar till närmaste heltal. Rätt svar kommer också att avrundas till heltal.</p>
+    </div>
+    <script>
+        let X, Y, Z, unknown;
+
+        function randomizeValues() {
+            const possibleY = [10, 15, 20]; // Vanliga droppar/mL
+            Y = possibleY[Math.floor(Math.random() * possibleY.length)];
+            Z = Math.floor(Math.random() * 21) + 10; // 10–30 mL
+            X = Y * Z;
+
+            const missing = Math.floor(Math.random() * 3);
+            let problemText = '';
+            let labelText = '';
+
+            if (missing === 0) {
+                unknown = "X";
+                problemText = `En läkare ordinerar <b>X</b> droppar av ett läkemedel. Läkemedlet ger ${Y} droppar/mL. Läkemedlet har en mängd på ${Z} mL.`;
+                labelText = "Ange antal droppar (heltal):";
+            } else if (missing === 1) {
+                unknown = "Y";
+                problemText = `En läkare ordinerar ${X} droppar av ett läkemedel. Läkemedlet ger <b>Y</b> droppar/mL. Läkemedlet har en mängd på ${Z} mL.`;
+                labelText = "Ange droppar/mL (heltal):";
+            } else {
+                unknown = "Z";
+                problemText = `En läkare ordinerar ${X} droppar av ett läkemedel. Läkemedlet ger ${Y} droppar/mL. Läkemedlet har en mängd på <b>Z</b> mL.`;
+                labelText = "Ange mängd i mL (heltal):";
+            }
+
+            document.getElementById("problem").innerHTML = problemText;
+            document.getElementById("answerLabel").textContent = labelText;
+            document.getElementById("answer").value = '';
+            document.getElementById("result").textContent = '';
+            document.getElementById("calculation").textContent = '';
+        }
+
+        function checkAnswer() {
+            const studentAnswer = parseInt(document.getElementById("answer").value, 10);
+            let correctAnswer, calculationText;
+
+            if (unknown === "X") {
+                correctAnswer = Math.round(Y * Z);
+                calculationText = `${Y} droppar/mL × ${Z} mL = ${correctAnswer} droppar`;
+            } else if (unknown === "Y") {
+                correctAnswer = Math.round(X / Z);
+                calculationText = `${X} droppar ÷ ${Z} mL = ${correctAnswer} droppar/mL`;
+            } else {
+                correctAnswer = Math.round(X / Y);
+                calculationText = `${X} droppar ÷ ${Y} droppar/mL = ${correctAnswer} mL`;
+            }
+
+            if (studentAnswer === correctAnswer) {
+                document.getElementById("result").textContent = "Rätt svar!";
+                document.getElementById("result").style.color = "#195";
+            } else {
+                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${correctAnswer}.`;
+                document.getElementById("result").style.color = "#a33";
+            }
+            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
+        }
+
+        // Visa första frågan när sidan laddas
+        window.onload = randomizeValues;
+    </script>
+</body>
+</html>
