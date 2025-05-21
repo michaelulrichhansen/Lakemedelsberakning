@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning – Syrgasräckvidd</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 540px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning<br>Syrgasräckvidd</h1>
+        <p id="problem"></p>
+        <button onclick="randomizeCase()">Slumpa värden</button>
+        <br><br>
+        <label id="answerLabel" for="answer"></label>
+        <input type="text" id="answer" placeholder="">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+        <p style="font-size:0.95em;color:#444;">
+            Beräkna hur länge syrgasen räcker, vilken volym eller vilket flöde som behövs. Använd punkt som decimaltecken och avrunda till en decimal om det behövs.
+        </p>
+    </div>
+    <script>
+        // Formeln: Syrgasvolym (L) = flaskvolym (L) × flasktryck (bar)
+        // Tid (min) = total volym (L) / flöde (L/min)
+        // Flöde (L/min) = total volym (L) / tid (min)
+
+        let V_flaska, P_flaska, flode, tid, caseType, correctAnswer, calcText;
+
+        function randomizeCase() {
+            // Slumpa värden inom rimliga intervall
+            V_flaska = [2, 5, 10, 11, 15][Math.floor(Math.random() * 5)];
+            P_flaska = (Math.random() * 3 + 1.5).toFixed(1); // bar, 1.5–4.5
+            flode = [2, 3, 4, 5, 6, 8, 10][Math.floor(Math.random() * 7)];
+            tid = Math.floor(Math.random() * 5) + 1; // timmar, 1–5
+
+            const total_volym = (V_flaska * P_flaska).toFixed(1);
+
+            // Välj vilket case som ska slumpas: tid, volym eller flöde
+            caseType = Math.floor(Math.random() * 3); // 0=tid, 1=flöde, 2=volym
+
+            if (caseType === 0) {
+                // Räkna ut hur länge syrgasen räcker (tid i timmar, en decimal)
+                correctAnswer = (total_volym / flode / 60).toFixed(1);
+                calcText = `${V_flaska} L × ${P_flaska} bar = ${total_volym} L totalt. ${total_volym} L ÷ ${flode} L/min ÷ 60 = ${correctAnswer} timmar.`;
+                document.getElementById("problem").textContent =
+                    `En syrgasflaska har ett tryck på ${P_flaska} bar och en volym på ${V_flaska} L. Patienten får ${flode} L syrgas/minut. Hur länge (i timmar) räcker flaskan?`;
+                document.getElementById("answerLabel").textContent = "Ange hur länge syrgasen räcker (en decimal, timmar):";
+                document.getElementById("answer").placeholder = "t.ex. 2.3";
+            } else if (caseType === 1) {
+                // Räkna ut maximalt flöde (L/min) för given flaskvolym och tid
+                correctAnswer = (total_volym / (tid * 60)).toFixed(1);
+                calcText = `${V_flaska} L × ${P_flaska} bar = ${total_volym} L totalt. ${total_volym} L ÷ (${tid} timmar × 60) = ${correctAnswer} L/min.`;
+                document.getElementById("problem").textContent =
+                    `En syrgasflaska har ett tryck på ${P_flaska} bar och en volym på ${V_flaska} L. Färden beräknas ta ${tid} timmar. Vilket högsta flöde (L/min) kan du ge för att syrgasen ska räcka hela resan?`;
+                document.getElementById("answerLabel").textContent = "Ange högsta flöde (en decimal, L/min):";
+                document.getElementById("answer").placeholder = "t.ex. 1.4";
+            } else {
+                // Räkna ut total syrgasvolym (L)
+                correctAnswer = total_volym;
+                calcText = `${V_flaska} L × ${P_flaska} bar = ${correctAnswer} L`;
+                document.getElementById("problem").textContent =
+                    `En syrgasflaska har ett tryck på ${P_flaska} bar och en volym på ${V_flaska} L. Hur många liter syrgas innehåller flaskan totalt?`;
+                document.getElementById("answerLabel").textContent = "Ange antal liter syrgas (en decimal):";
+                document.getElementById("answer").placeholder = "t.ex. 21.5";
+            }
+            document.getElementById("result").textContent = '';
+            document.getElementById("calculation").textContent = '';
+            document.getElementById("answer").value = '';
+        }
+
+        function checkAnswer() {
+            let userInput = document.getElementById("answer").value.replace(",", ".").trim();
+            let user = Number(parseFloat(userInput).toFixed(1));
+            let correct = Number(correctAnswer);
+
+            let isCorrect = (user === correct);
+
+            if (isCorrect) {
+                document.getElementById("result").textContent = "Rätt svar!";
+                document.getElementById("result").style.color = "#195";
+            } else {
+                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${correctAnswer}.`;
+                document.getElementById("result").style.color = "#a33";
+            }
+            document.getElementById("calculation").textContent = `Beräkning: ${calcText}`;
+        }
+
+        // Starta med en slumpad fråga direkt
+        window.onload = randomizeCase;
+    </script>
+</body>
+</html>
