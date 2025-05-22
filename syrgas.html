@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Läkemedelsberäkning syrgas</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 540px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        #result { font-weight: bold; margin-top: 16px;}
+        #calculation { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Läkemedelsberäkning syrgas</h1>
+        <p id="problem"></p>
+        <button onclick="randomizeCase()">Slumpa värden</button>
+        <br><br>
+        <label id="answerLabel" for="answer"></label>
+        <input type="text" id="answer" placeholder="">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result"></p>
+        <p id="calculation"></p>
+        <p style="font-size:0.95em;color:#444;">
+            Svara med det antal decimaler som anges i instruktionen. Använd punkt som decimaltecken.
+        </p>
+    </div>
+    <script>
+        let V_flaska, P_flaska, flode, tid, caseType, correctAnswer, calcText, decimals, answerFormat;
+
+        function selectDecimals(val) {
+            // Om svaret är heltal, kräv heltal
+            if (Number.isInteger(val)) return 0;
+            // Om det är max 1 decimal som behövs, kräv bara 1 decimal
+            if (Math.abs(val * 10 - Math.round(val * 10)) < 0.0001) return 1;
+            // Om det är max 2 decimaler som behövs, kräv 2 decimaler
+            if (Math.abs(val * 100 - Math.round(val * 100)) < 0.0001) return 2;
+            // Annars, max 3 decimaler
+            return 3;
+        }
+
+        function showFormat(dec) {
+            if (dec === 0) return "heltal";
+            if (dec === 1) return "en decimal (t.ex. 2.5)";
+            if (dec === 2) return "två decimaler (t.ex. 2.50)";
+            if (dec === 3) return "tre decimaler (t.ex. 0.125)";
+        }
+
+        function randomizeCase() {
+            let ok = false;
+            while (!ok) {
+                V_flaska = [2, 5, 10, 11, 15][Math.floor(Math.random() * 5)];
+                P_flaska = (Math.random() * 3 + 1.5).toFixed(1); // bar, 1.5–4.5
+                flode = [2, 3, 4, 5, 6, 8, 10][Math.floor(Math.random() * 7)];
+                tid = Math.floor(Math.random() * 3) + 1; // timmar, 1–3
+
+                const total_volym = V_flaska * P_flaska;
+
+                caseType = Math.floor(Math.random() * 3); // 0=tid, 1=flöde, 2=volym
+
+                if (caseType === 1) {
+                    // Flöde (L/min)
+                    let flow = total_volym / (tid * 60);
+                    if (flow >= 0.5 && flow <= 15) ok = true;
+                } else if (caseType === 0) {
+                    // Tid (h)
+                    let t = total_volym / flode / 60;
+                    if (t >= 0.2 && t <= 12) ok = true;
+                } else {
+                    ok = true;
+                }
+            }
+
+            const total_volym = V_flaska * P_flaska;
+
+            if (caseType === 0) {
+                let svar = total_volym / flode / 60;
+                decimals = selectDecimals(svar);
+                correctAnswer = Number(svar).toFixed(decimals);
+                if (decimals === 0) correctAnswer = String(Number(correctAnswer));
+                calcText = `${V_flaska} L × ${P_flaska} bar = ${(total_volym).toFixed(2)} L totalt. ${(total_volym).toFixed(2)} L ÷ ${flode} L/min ÷ 60 = ${correctAnswer} timmar.`;
+                document.getElementById("problem").textContent =
+                    `En syrgasflaska har ett tryck på ${P_flaska} bar och en volym på ${V_flaska} L. Patienten får ${flode} L syrgas/minut. Hur länge (i timmar) räcker flaskan?`;
+                answerFormat = showFormat(decimals);
+                document.getElementById("answerLabel").textContent = `Ange hur länge syrgasen räcker (${answerFormat}):`;
+                document.getElementById("answer").placeholder = decimals === 0 ? "t.ex. 3" : `t.ex. ${"0.".padEnd(decimals+2,"0")}`;
+            } else if (caseType === 1) {
+                let svar = total_volym / (tid * 60);
+                decimals = selectDecimals(svar);
+                correctAnswer = Number(svar).toFixed(decimals);
+                if (decimals === 0) correctAnswer = String(Number(correctAnswer));
+                calcText = `${V_flaska} L × ${P_flaska} bar = ${(total_volym).toFixed(2)} L totalt. ${(total_volym).toFixed(2)} L ÷ (${tid} timmar × 60) = ${correctAnswer} L/min.`;
+                document.getElementById("problem").textContent =
+                    `En syrgasflaska har ett tryck på ${P_flaska} bar och en volym på ${V_flaska} L. Färden beräknas ta ${tid} timmar. Vilket högsta flöde (L/min) kan du ge för att syrgasen ska räcka hela resan?`;
+                answerFormat = showFormat(decimals);
+                document.getElementById("answerLabel").textContent = `Ange högsta flöde (${answerFormat}):`;
+                document.getElementById("answer").placeholder = decimals === 0 ? "t.ex. 3" : `t.ex. ${"0.".padEnd(decimals+2,"0")}`;
+            } else {
+                let svar = total_volym;
+                decimals = selectDecimals(svar);
+                correctAnswer = Number(svar).toFixed(decimals);
+                if (decimals === 0) correctAnswer = String(Number(correctAnswer));
+                calcText = `${V_flaska} L × ${P_flaska} bar = ${correctAnswer} L`;
+                document.getElementById("problem").textContent =
+                    `En syrgasflaska har ett tryck på ${P_flaska} bar och en volym på ${V_flaska} L. Hur många liter syrgas innehåller flaskan totalt?`;
+                answerFormat = showFormat(decimals);
+                document.getElementById("answerLabel").textContent = `Ange antal liter syrgas (${answerFormat}):`;
+                document.getElementById("answer").placeholder = decimals === 0 ? "t.ex. 15" : `t.ex. ${"0.".padEnd(decimals+2,"0")}`;
+            }
+            document.getElementById("result").textContent = '';
+            document.getElementById("calculation").textContent = '';
+            document.getElementById("answer").value = '';
+        }
+
+        function checkAnswer() {
+            let userInput = document.getElementById("answer").value.replace(",", ".").trim();
+            let user = Number(parseFloat(userInput).toFixed(decimals));
+            let correct = Number(correctAnswer);
+
+            let isCorrect = (user === correct);
+
+            if (isCorrect) {
+                document.getElementById("result").textContent = "Rätt svar!";
+                document.getElementById("result").style.color = "#195";
+            } else {
+                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${correctAnswer}.`;
+                document.getElementById("result").style.color = "#a33";
+            }
+            document.getElementById("calculation").textContent = `Beräkning: ${calcText}`;
+        }
+
+        window.onload = randomizeCase;
+    </script>
+</body>
+</html>
