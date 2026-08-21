@@ -11,23 +11,19 @@
         label, input, button { font-size: 1rem; margin-top: 12px; }
         input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa; }
         button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
-        button:hover { background: #2a6; }
-        #problem { line-height: 1.55; }
         #result { font-weight: bold; margin-top: 16px; }
-        #calculation { color: #555; line-height: 1.55; }
-        .unit { margin-left: 6px; }
+        #calculation { color: #555; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>Läkemedelsberäkning<br>Injektionshastighet</h1>
         <p id="problem"></p>
-        <button type="button" onclick="randomizeCase()">Slumpa ny uppgift</button>
+        <button onclick="randomizeCase()">Slumpa värden</button>
         <br><br>
-        <label id="answerLabel" for="answer"></label><br>
-        <input type="text" id="answer" inputmode="decimal" autocomplete="off">
-        <span class="unit" id="answerUnit"></span>
-        <button type="button" onclick="checkAnswer()">Kontrollera svar</button>
+        <label id="answerLabel" for="answer"></label>
+        <input type="text" id="answer" placeholder="">
+        <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result" aria-live="polite"></p>
         <p id="calculation"></p>
         <p style="font-size:0.95em;color:#444;">Avrunda svaret till två decimaler vid behov. Både punkt och komma accepteras som decimaltecken.</p>
@@ -79,8 +75,7 @@
             }
 
             document.getElementById("problem").innerHTML = problemText;
-            document.getElementById("answerLabel").textContent = "Ditt svar:";
-            document.getElementById("answerUnit").textContent = answerUnit;
+            document.getElementById("answerLabel").textContent = `Ange antal ${answerUnit} (två decimaler):`;
             document.getElementById("answer").value = "";
             document.getElementById("result").textContent = "";
             document.getElementById("calculation").innerHTML = "";
