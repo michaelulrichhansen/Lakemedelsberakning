@@ -21,117 +21,89 @@
         <button onclick="randomizeCase()">Slumpa värden</button>
         <br><br>
         <label id="answerLabel" for="answer"></label>
-        <input type="text" id="answer" placeholder="">
+        <input type="text" id="answer" placeholder="Svara med heltal">
         <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result"></p>
         <p id="calculation"></p>
         <p style="font-size:0.95em;color:#444;">
-            Svara med det antal decimaler som anges i instruktionen. Använd punkt som decimaltecken.
+            Svara med ett heltal. Både punkt och komma accepteras som decimaltecken.
         </p>
     </div>
     <script>
-        let V_flaska, P_flaska, flode, tid, caseType, correctAnswer, calcText, decimals, answerFormat;
+        const cylinderVolumes = [2, 3, 5, 10];
+        const pressures = [50, 75, 100, 120, 150, 180, 200];
+        const flows = [1, 2, 3, 4, 5, 6, 8, 10];
 
-        function selectDecimals(val) {
-            // Om svaret är heltal, kräv heltal
-            if (Number.isInteger(val)) return 0;
-            // Om det är max 1 decimal som behövs, kräv bara 1 decimal
-            if (Math.abs(val * 10 - Math.round(val * 10)) < 0.0001) return 1;
-            // Om det är max 2 decimaler som behövs, kräv 2 decimaler
-            if (Math.abs(val * 100 - Math.round(val * 100)) < 0.0001) return 2;
-            // Annars, max 3 decimaler
-            return 3;
-        }
+        let cylinderVolume, pressure, flow, totalVolume, durationMinutes;
+        let caseType, correctAnswer, answerUnit, calcText;
 
-        function showFormat(dec) {
-            if (dec === 0) return "heltal";
-            if (dec === 1) return "en decimal (t.ex. 2.5)";
-            if (dec === 2) return "två decimaler (t.ex. 2.50)";
-            if (dec === 3) return "tre decimaler (t.ex. 0.125)";
+        const pick = values => values[Math.floor(Math.random() * values.length)];
+
+        function createValues() {
+            do {
+                cylinderVolume = pick(cylinderVolumes);
+                pressure = pick(pressures);
+                flow = pick(flows);
+                totalVolume = cylinderVolume * pressure;
+                durationMinutes = totalVolume / flow;
+            } while (!Number.isInteger(durationMinutes) || durationMinutes < 30 || durationMinutes > 600);
         }
 
         function randomizeCase() {
-            let ok = false;
-            while (!ok) {
-                V_flaska = [2, 5, 10, 11, 15][Math.floor(Math.random() * 5)];
-                P_flaska = (Math.random() * 3 + 1.5).toFixed(1); // bar, 1.5–4.5
-                flode = [2, 3, 4, 5, 6, 8, 10][Math.floor(Math.random() * 7)];
-                tid = Math.floor(Math.random() * 3) + 1; // timmar, 1–3
-
-                const total_volym = V_flaska * P_flaska;
-
-                caseType = Math.floor(Math.random() * 3); // 0=tid, 1=flöde, 2=volym
-
-                if (caseType === 1) {
-                    // Flöde (L/min)
-                    let flow = total_volym / (tid * 60);
-                    if (flow >= 0.5 && flow <= 15) ok = true;
-                } else if (caseType === 0) {
-                    // Tid (h)
-                    let t = total_volym / flode / 60;
-                    if (t >= 0.2 && t <= 12) ok = true;
-                } else {
-                    ok = true;
-                }
-            }
-
-            const total_volym = V_flaska * P_flaska;
+            createValues();
+            caseType = Math.floor(Math.random() * 3);
 
             if (caseType === 0) {
-                let svar = total_volym / flode / 60;
-                decimals = selectDecimals(svar);
-                correctAnswer = Number(svar).toFixed(decimals);
-                if (decimals === 0) correctAnswer = String(Number(correctAnswer));
-                calcText = `${V_flaska} L × ${P_flaska} bar = ${(total_volym).toFixed(2)} L totalt. ${(total_volym).toFixed(2)} L ÷ ${flode} L/min ÷ 60 = ${correctAnswer} timmar.`;
+                correctAnswer = totalVolume;
+                answerUnit = "liter";
+                calcText = `${cylinderVolume} L × ${pressure} bar = ${correctAnswer} liter syrgas`;
                 document.getElementById("problem").textContent =
-                    `En syrgasflaska har ett tryck på ${P_flaska} bar och en volym på ${V_flaska} L. Patienten får ${flode} L syrgas/minut. Hur länge (i timmar) räcker flaskan?`;
-                answerFormat = showFormat(decimals);
-                document.getElementById("answerLabel").textContent = `Ange hur länge syrgasen räcker (${answerFormat}):`;
-                document.getElementById("answer").placeholder = decimals === 0 ? "t.ex. 3" : `t.ex. ${"0.".padEnd(decimals+2,"0")}`;
+                    `En syrgasflaska har en flaskvolym på ${cylinderVolume} L och manometern visar ${pressure} bar. Hur många liter syrgas innehåller flaskan?`;
             } else if (caseType === 1) {
-                let svar = total_volym / (tid * 60);
-                decimals = selectDecimals(svar);
-                correctAnswer = Number(svar).toFixed(decimals);
-                if (decimals === 0) correctAnswer = String(Number(correctAnswer));
-                calcText = `${V_flaska} L × ${P_flaska} bar = ${(total_volym).toFixed(2)} L totalt. ${(total_volym).toFixed(2)} L ÷ (${tid} timmar × 60) = ${correctAnswer} L/min.`;
+                correctAnswer = durationMinutes;
+                answerUnit = "minuter";
+                calcText = `${cylinderVolume} L × ${pressure} bar = ${totalVolume} liter. ${totalVolume} liter ÷ ${flow} L/min = ${correctAnswer} minuter`;
                 document.getElementById("problem").textContent =
-                    `En syrgasflaska har ett tryck på ${P_flaska} bar och en volym på ${V_flaska} L. Färden beräknas ta ${tid} timmar. Vilket högsta flöde (L/min) kan du ge för att syrgasen ska räcka hela resan?`;
-                answerFormat = showFormat(decimals);
-                document.getElementById("answerLabel").textContent = `Ange högsta flöde (${answerFormat}):`;
-                document.getElementById("answer").placeholder = decimals === 0 ? "t.ex. 3" : `t.ex. ${"0.".padEnd(decimals+2,"0")}`;
+                    `En syrgasflaska har en flaskvolym på ${cylinderVolume} L och manometern visar ${pressure} bar. Patienten får ${flow} L syrgas/minut. Hur många minuter räcker flaskan?`;
             } else {
-                let svar = total_volym;
-                decimals = selectDecimals(svar);
-                correctAnswer = Number(svar).toFixed(decimals);
-                if (decimals === 0) correctAnswer = String(Number(correctAnswer));
-                calcText = `${V_flaska} L × ${P_flaska} bar = ${correctAnswer} L`;
+                correctAnswer = flow;
+                answerUnit = "L/min";
+                calcText = `${cylinderVolume} L × ${pressure} bar = ${totalVolume} liter. ${totalVolume} liter ÷ ${durationMinutes} min = ${correctAnswer} L/min`;
                 document.getElementById("problem").textContent =
-                    `En syrgasflaska har ett tryck på ${P_flaska} bar och en volym på ${V_flaska} L. Hur många liter syrgas innehåller flaskan totalt?`;
-                answerFormat = showFormat(decimals);
-                document.getElementById("answerLabel").textContent = `Ange antal liter syrgas (${answerFormat}):`;
-                document.getElementById("answer").placeholder = decimals === 0 ? "t.ex. 15" : `t.ex. ${"0.".padEnd(decimals+2,"0")}`;
+                    `En syrgasflaska har en flaskvolym på ${cylinderVolume} L och manometern visar ${pressure} bar. Syrgasen ska räcka i ${durationMinutes} minuter. Vilket flöde i L/min motsvarar detta?`;
             }
-            document.getElementById("result").textContent = '';
-            document.getElementById("calculation").textContent = '';
-            document.getElementById("answer").value = '';
+
+            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit} (heltal):`;
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").textContent = "";
+            document.getElementById("answer").value = "";
         }
 
         function checkAnswer() {
-            let userInput = document.getElementById("answer").value.replace(",", ".").trim();
-            let user = Number(parseFloat(userInput).toFixed(decimals));
-            let correct = Number(correctAnswer);
+            const rawAnswer = document.getElementById("answer").value.trim().replace(",", ".");
+            const userAnswer = Number(rawAnswer);
 
-            let isCorrect = (user === correct);
+            if (rawAnswer === "" || !Number.isFinite(userAnswer)) {
+                document.getElementById("result").textContent = "Skriv ett giltigt tal.";
+                document.getElementById("result").style.color = "#a33";
+                document.getElementById("calculation").textContent = "";
+                return;
+            }
 
-            if (isCorrect) {
+            if (userAnswer === correctAnswer) {
                 document.getElementById("result").textContent = "Rätt svar!";
                 document.getElementById("result").style.color = "#195";
             } else {
-                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${correctAnswer}.`;
+                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${correctAnswer} ${answerUnit}.`;
                 document.getElementById("result").style.color = "#a33";
             }
+
             document.getElementById("calculation").textContent = `Beräkning: ${calcText}`;
         }
+
+        document.getElementById("answer").addEventListener("keydown", event => {
+            if (event.key === "Enter") checkAnswer();
+        });
 
         window.onload = randomizeCase;
     </script>
