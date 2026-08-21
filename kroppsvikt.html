@@ -17,69 +17,81 @@
 <body>
     <div class="card">
         <h1>Läkemedelsberäkning<br>Kroppsvikt</h1>
-        <p id="problem">En läkare ordinerar ett läkemedel på X mg. Enligt FASS ska läkemedlet ges Y mg/kg kroppsvikt. Patienten väger Z kg.</p>
+        <p id="problem"></p>
         <button onclick="randomizeValues()">Slumpa värden</button>
         <br><br>
-        <label for="answer">Ange ditt svar (heltal):</label>
+        <label id="answerLabel" for="answer">Ange ditt svar (heltal):</label>
         <input type="number" id="answer" placeholder="Skriv ditt svar här (heltal)">
         <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result"></p>
         <p id="calculation"></p>
     </div>
     <script>
-        let X, Y, Z;
-        let missingValue;
+        const dosesPerKg = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40];
+        const weightsKg = [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100];
+
+        let dosePerKg, weight, totalDose, questionType, correctAnswer, calculationText, answerUnit;
+
+        const pick = values => values[Math.floor(Math.random() * values.length)];
 
         function randomizeValues() {
-            X = Math.floor(Math.random() * (2000 - 100) + 100);  // Dos mg (heltal)
-            Y = Math.floor(Math.random() * (50 - 1) + 1);        // mg/kg (heltal)
-            Z = Math.floor(Math.random() * (150 - 1) + 1);       // kg (heltal)
+            dosePerKg = pick(dosesPerKg);
+            weight = pick(weightsKg);
+            totalDose = dosePerKg * weight;
+            questionType = Math.floor(Math.random() * 3);
 
-            const missingValueOptions = ['X', 'Y', 'Z'];
-            missingValue = missingValueOptions[Math.floor(Math.random() * missingValueOptions.length)];
+            let problemText = "";
 
-            let problemText = `En läkare ordinerar ett läkemedel på `;
-            problemText += (missingValue === 'X') ? '<b>X</b>' : `${X}`;
-            problemText += ` mg. Enligt FASS ska läkemedlet ges `;
-            problemText += (missingValue === 'Y') ? '<b>Y</b>' : `${Y}`;
-            problemText += ` mg/kg kroppsvikt. Patienten väger `;
-            problemText += (missingValue === 'Z') ? '<b>Z</b>' : `${Z}`;
-            problemText += ` kg.`;
+            if (questionType === 0) {
+                correctAnswer = totalDose;
+                answerUnit = "mg";
+                problemText = `En patient väger <strong>${weight} kg</strong>. Läkemedlet ska doseras med <strong>${dosePerKg} mg/kg kroppsvikt</strong>. Hur stor total dos i <strong>mg</strong> ska patienten få?`;
+                calculationText = `${dosePerKg} mg/kg × ${weight} kg = ${correctAnswer} mg`;
+            } else if (questionType === 1) {
+                correctAnswer = dosePerKg;
+                answerUnit = "mg/kg";
+                problemText = `En patient väger <strong>${weight} kg</strong> och ska få en total dos på <strong>${totalDose} mg</strong>. Hur många <strong>mg/kg kroppsvikt</strong> motsvarar detta?`;
+                calculationText = `${totalDose} mg ÷ ${weight} kg = ${correctAnswer} mg/kg`;
+            } else {
+                correctAnswer = weight;
+                answerUnit = "kg";
+                problemText = `Ett läkemedel ska doseras med <strong>${dosePerKg} mg/kg kroppsvikt</strong>. Patienten ska få en total dos på <strong>${totalDose} mg</strong>. Hur mycket väger patienten i <strong>kg</strong>?`;
+                calculationText = `${totalDose} mg ÷ ${dosePerKg} mg/kg = ${correctAnswer} kg`;
+            }
 
             document.getElementById("problem").innerHTML = problemText;
-            document.getElementById("result").textContent = '';
-            document.getElementById("calculation").textContent = '';
-            document.getElementById("answer").value = '';
+            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit} (heltal):`;
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").textContent = "";
+            document.getElementById("answer").value = "";
         }
 
         function checkAnswer() {
-            let studentAnswer = parseInt(document.getElementById("answer").value);
-            let correctAnswer;
-            let calculationText = "";
+            const rawAnswer = document.getElementById("answer").value.trim().replace(",", ".");
+            const studentAnswer = Number(rawAnswer);
 
-            if (missingValue === 'X') {
-                correctAnswer = Math.round(Y * Z);
-                calculationText = `${Y} mg/kg × ${Z} kg = ${correctAnswer} mg`;
-            } else if (missingValue === 'Y') {
-                correctAnswer = Math.round(X / Z);
-                calculationText = `${X} mg ÷ ${Z} kg = ${correctAnswer} mg/kg`;
-            } else if (missingValue === 'Z') {
-                correctAnswer = Math.round(X / Y);
-                calculationText = `${X} mg ÷ ${Y} mg/kg = ${correctAnswer} kg`;
+            if (rawAnswer === "" || !Number.isFinite(studentAnswer)) {
+                document.getElementById("result").textContent = "Skriv ett giltigt tal.";
+                document.getElementById("result").style.color = "#a33";
+                document.getElementById("calculation").textContent = "";
+                return;
             }
 
             if (studentAnswer === correctAnswer) {
                 document.getElementById("result").textContent = "Rätt svar!";
                 document.getElementById("result").style.color = "#195";
             } else {
-                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${correctAnswer}.`;
+                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${correctAnswer} ${answerUnit}.`;
                 document.getElementById("result").style.color = "#a33";
             }
 
             document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
         }
 
-        // Slumpa ett första problem vid sidladdning
+        document.getElementById("answer").addEventListener("keydown", event => {
+            if (event.key === "Enter") checkAnswer();
+        });
+
         window.onload = randomizeValues;
     </script>
 </body>
