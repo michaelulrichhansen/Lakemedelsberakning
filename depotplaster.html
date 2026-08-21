@@ -30,9 +30,20 @@
     <script>
         const strengthsPerHour = [12.5, 25, 37.5, 50, 75, 100];
         const durationsHours = [12, 24, 36, 48, 60, 72];
+        const examCases = [
+            { microgramsPer24Hours: 960, hours: 10 },
+            { microgramsPer24Hours: 1500, hours: 12 },
+            { microgramsPer24Hours: 1200, hours: 8 },
+            { microgramsPer24Hours: 600, hours: 12 },
+            { microgramsPer24Hours: 2400, hours: 6 },
+            { microgramsPer24Hours: 1800, hours: 16 },
+            { microgramsPer24Hours: 720, hours: 20 },
+            { microgramsPer24Hours: 2400, hours: 18 }
+        ];
 
         let strengthPerHour, durationHours, totalMicrograms;
         let questionType, correctAnswer, answerUnit, calculationText;
+        let nextIsExamCase = true;
 
         const pick = values => values[Math.floor(Math.random() * values.length)];
 
@@ -41,6 +52,13 @@
         }
 
         function randomizeValues() {
+            if (nextIsExamCase) {
+                nextIsExamCase = false;
+                randomizeExamCase();
+                return;
+            }
+
+            nextIsExamCase = true;
             strengthPerHour = pick(strengthsPerHour);
             durationHours = pick(durationsHours);
             totalMicrograms = strengthPerHour * durationHours;
@@ -75,7 +93,29 @@
             document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit}:`;
             document.getElementById("answer").value = "";
             document.getElementById("result").textContent = "";
-            document.getElementById("calculation").textContent = "";
+            document.getElementById("calculation").innerHTML = "";
+        }
+
+        function randomizeExamCase() {
+            const currentCase = pick(examCases);
+            const microgramsPerHour = currentCase.microgramsPer24Hours / 24;
+            const releasedMicrograms = microgramsPerHour * currentCase.hours;
+            const releasedMg = releasedMicrograms / 1000;
+
+            correctAnswer = releasedMg;
+            answerUnit = "mg";
+            calculationText =
+                `${currentCase.microgramsPer24Hours} µg/24 h ÷ 24 = ${formatNumber(microgramsPerHour)} µg/timme<br>` +
+                `${formatNumber(microgramsPerHour)} µg/timme × ${currentCase.hours} timmar = ${formatNumber(releasedMicrograms)} µg<br>` +
+                `${formatNumber(releasedMicrograms)} µg ÷ 1000 = ${formatNumber(releasedMg)} mg`;
+
+            document.getElementById("problem").textContent =
+                `Ett depotplåster frisätter ${currentCase.microgramsPer24Hours} µg/24 h. ` +
+                `Plåstret har suttit på i ${currentCase.hours} timmar. Hur stor dos i mg har plåstret frisatt under tiden?`;
+            document.getElementById("answerLabel").textContent = "Ange ditt svar i mg:";
+            document.getElementById("answer").value = "";
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").innerHTML = "";
         }
 
         function checkAnswer() {
@@ -86,7 +126,7 @@
             if (rawAnswer === "" || !Number.isFinite(studentAnswer)) {
                 document.getElementById("result").textContent = "Skriv ett giltigt tal.";
                 document.getElementById("result").style.color = "#a33";
-                document.getElementById("calculation").textContent = "";
+                document.getElementById("calculation").innerHTML = "";
                 return;
             }
 
@@ -98,7 +138,7 @@
                 document.getElementById("result").style.color = "#a33";
             }
 
-            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
+            document.getElementById("calculation").innerHTML = `<strong>Beräkning:</strong><br>${calculationText}`;
         }
 
         document.getElementById("answer").addEventListener("keydown", event => {
