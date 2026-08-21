@@ -27,86 +27,82 @@
         <p id="calculation"></p>
     </div>
     <script>
-        let X, Y, Z, missingVariable, expectedDecimals;
+        const dosesPerSquareMeter = [10, 20, 25, 30, 40, 50, 75, 100, 125, 150, 200, 250, 300, 400, 500];
+        const bodySurfaces = [0.5, 0.6, 0.8, 1, 1.2, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.1, 2.2];
+
+        let dosePerSquareMeter, bodySurface, totalDose, questionType;
+        let correctAnswer, calculationText, answerUnit, expectedDecimals;
+
+        const pick = values => values[Math.floor(Math.random() * values.length)];
+
+        function formatNumber(value, decimals = 2) {
+            return Number(value.toFixed(decimals)).toString().replace(".", ",");
+        }
 
         function randomizeValues() {
-            var choice = Math.floor(Math.random() * 3);
+            dosePerSquareMeter = pick(dosesPerSquareMeter);
+            bodySurface = pick(bodySurfaces);
+            totalDose = Number((dosePerSquareMeter * bodySurface).toFixed(1));
+            questionType = Math.floor(Math.random() * 3);
 
-            Y = Math.floor(Math.random() * 50) + 1; // Dos per m2
-            Z = Number((Math.random() * 2 + 1).toFixed(1)); // Kroppsyta i m2
-            X = Math.round(Y * Z); // Total dos i mg
+            let problemText = "";
 
-            let problemText = '';
-            let labelText = '';
-            let placeholderText = '';
-
-            switch(choice) {
-                case 0: // X saknas, svar = heltal
-                    missingVariable = 'X';
-                    expectedDecimals = 0;
-                    problemText = `En läkare ordinerar ett läkemedel på <b>X</b> mg. Enligt FASS ska läkemedlet ges ${Y} mg/m². Patienten har en kroppsyta på ${Z} m².`;
-                    labelText = 'Ange ditt svar (heltal):';
-                    placeholderText = 'Heltal';
-                    break;
-                case 1: // Y saknas, svar = två decimaler
-                    missingVariable = 'Y';
-                    expectedDecimals = 2;
-                    problemText = `En läkare ordinerar ett läkemedel på ${X} mg. Enligt FASS ska läkemedlet ges <b>Y</b> mg/m². Patienten har en kroppsyta på ${Z} m².`;
-                    labelText = 'Ange ditt svar (två decimaler):';
-                    placeholderText = 't.ex. 12.34';
-                    break;
-                case 2: // Z saknas, svar = en decimal
-                    missingVariable = 'Z';
-                    expectedDecimals = 1;
-                    problemText = `En läkare ordinerar ett läkemedel på ${X} mg. Enligt FASS ska läkemedlet ges ${Y} mg/m². Patienten har en kroppsyta på <b>Z</b> m².`;
-                    labelText = 'Ange ditt svar (en decimal):';
-                    placeholderText = 't.ex. 1.2';
-                    break;
+            if (questionType === 0) {
+                correctAnswer = totalDose;
+                answerUnit = "mg";
+                expectedDecimals = Number.isInteger(correctAnswer) ? 0 : 1;
+                problemText = `En patient har en kroppsyta på <strong>${formatNumber(bodySurface, 1)} m²</strong>. Läkemedlet ska doseras med <strong>${formatNumber(dosePerSquareMeter)} mg/m²</strong>. Hur stor total dos i <strong>mg</strong> ska patienten få?`;
+                calculationText = `${formatNumber(dosePerSquareMeter)} mg/m² × ${formatNumber(bodySurface, 1)} m² = ${formatNumber(correctAnswer, 1)} mg`;
+            } else if (questionType === 1) {
+                correctAnswer = dosePerSquareMeter;
+                answerUnit = "mg/m²";
+                expectedDecimals = 0;
+                problemText = `En patient har en kroppsyta på <strong>${formatNumber(bodySurface, 1)} m²</strong> och ska få en total dos på <strong>${formatNumber(totalDose, 1)} mg</strong>. Hur många <strong>mg/m²</strong> motsvarar detta?`;
+                calculationText = `${formatNumber(totalDose, 1)} mg ÷ ${formatNumber(bodySurface, 1)} m² = ${formatNumber(correctAnswer)} mg/m²`;
+            } else {
+                correctAnswer = bodySurface;
+                answerUnit = "m²";
+                expectedDecimals = 1;
+                problemText = `Ett läkemedel ska doseras med <strong>${formatNumber(dosePerSquareMeter)} mg/m²</strong>. Patienten ska få en total dos på <strong>${formatNumber(totalDose, 1)} mg</strong>. Hur stor kroppsyta har patienten i <strong>m²</strong>?`;
+                calculationText = `${formatNumber(totalDose, 1)} mg ÷ ${formatNumber(dosePerSquareMeter)} mg/m² = ${formatNumber(correctAnswer, 1)} m²`;
             }
+
+            const decimalText = expectedDecimals === 0 ? "heltal" : "en decimal";
             document.getElementById("problem").innerHTML = problemText;
-            document.getElementById("result").textContent = '';
-            document.getElementById("calculation").textContent = '';
-            document.getElementById("answer").value = '';
-            document.getElementById("answerLabel").textContent = labelText;
-            document.getElementById("answer").placeholder = placeholderText;
+            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit} (${decimalText}):`;
+            document.getElementById("answer").placeholder = expectedDecimals === 0 ? "Heltal" : "t.ex. 1,2";
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").textContent = "";
+            document.getElementById("answer").value = "";
         }
 
         function checkAnswer() {
-            let studentInput = document.getElementById("answer").value.replace(",", ".");
-            let correctAnswer;
-            let calculationText = "";
+            const rawAnswer = document.getElementById("answer").value.trim().replace(",", ".");
+            const studentAnswer = Number(rawAnswer);
+            const roundedStudentAnswer = Number(studentAnswer.toFixed(expectedDecimals));
 
-            if(missingVariable === 'X') {
-                correctAnswer = Math.round(Y * Z);
-                calculationText = `${Y} mg/m² × ${Z} m² = ${correctAnswer} mg`;
-            } else if(missingVariable === 'Y') {
-                correctAnswer = (X / Z).toFixed(2);
-                calculationText = `${X} mg ÷ ${Z} m² = ${correctAnswer} mg/m²`;
-            } else {
-                correctAnswer = (X / Y).toFixed(1);
-                calculationText = `${X} mg ÷ ${Y} mg/m² = ${correctAnswer} m²`;
+            if (rawAnswer === "" || !Number.isFinite(studentAnswer)) {
+                document.getElementById("result").textContent = "Skriv ett giltigt tal.";
+                document.getElementById("result").style.color = "#a33";
+                document.getElementById("calculation").textContent = "";
+                return;
             }
 
-            let isCorrect;
-            if (expectedDecimals === 0) {
-                isCorrect = (parseInt(studentInput) === correctAnswer);
-            } else {
-                // Jämför som sträng efter avrundning för decimalprecision
-                isCorrect = (Number(studentInput).toFixed(expectedDecimals) === correctAnswer);
-            }
-
-            if(isCorrect) {
+            if (roundedStudentAnswer === correctAnswer) {
                 document.getElementById("result").textContent = "Rätt svar!";
                 document.getElementById("result").style.color = "#195";
             } else {
-                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${correctAnswer}.`;
+                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${formatNumber(correctAnswer, expectedDecimals)} ${answerUnit}.`;
                 document.getElementById("result").style.color = "#a33";
             }
 
             document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
         }
 
-        // Slumpa ett första problem vid sidladdning
+        document.getElementById("answer").addEventListener("keydown", event => {
+            if (event.key === "Enter") checkAnswer();
+        });
+
         window.onload = randomizeValues;
     </script>
 </body>
