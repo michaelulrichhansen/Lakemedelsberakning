@@ -21,82 +21,90 @@
         <button onclick="randomizeValues()">Slumpa värden</button>
         <br><br>
         <label id="answerLabel" for="answer"></label>
-        <input type="number" id="answer" placeholder="Avrunda till heltal">
+        <input type="text" id="answer" placeholder="Ditt svar">
         <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result"></p>
         <p id="calculation"></p>
-        <p style="font-size:0.95em;color:#444;">Avrunda ditt svar till närmaste heltal. Rätt svar kommer också att avrundas till närmaste heltal.</p>
+        <p style="font-size:0.95em;color:#444;">Avrunda till två decimaler vid behov. Både punkt och komma accepteras.</p>
     </div>
     <script>
-        let X, Y, Z, missing;
+        const strengthsPerHour = [12.5, 25, 37.5, 50, 75, 100];
+        const durationsHours = [12, 24, 36, 48, 60, 72];
+
+        let strengthPerHour, durationHours, totalMicrograms;
+        let questionType, correctAnswer, answerUnit, calculationText;
+
+        const pick = values => values[Math.floor(Math.random() * values.length)];
+
+        function formatNumber(value) {
+            return Number(value.toFixed(2)).toString().replace(".", ",");
+        }
 
         function randomizeValues() {
-            X = Math.floor(Math.random() * 87) + 10; // styrka ug/24h
-            Y = Math.floor(Math.random() * 47) + 2;  // antal timmar
-            Z = Math.round((X / 24) * Y); // totalt intagen mängd ug
+            strengthPerHour = pick(strengthsPerHour);
+            durationHours = pick(durationsHours);
+            totalMicrograms = strengthPerHour * durationHours;
+            questionType = Math.floor(Math.random() * 4);
 
-            // Välj vilken variabel som ska döljas: 0=X, 1=Y, 2=Z
-            missing = Math.floor(Math.random() * 3);
-
-            let problemText = "En patient är ordinerad ett depotplåster med styrkan ";
-            if (missing === 0) {
-                problemText += "<b>X</b>";
+            if (questionType === 0) {
+                correctAnswer = totalMicrograms;
+                answerUnit = "mikrogram";
+                document.getElementById("problem").textContent =
+                    `Ett depotplåster frisätter ${formatNumber(strengthPerHour)} mikrogram per timme. Plåstret har suttit på i ${durationHours} timmar. Hur många mikrogram läkemedel har plåstret frisatt under tiden?`;
+                calculationText = `${formatNumber(strengthPerHour)} mikrogram/timme × ${durationHours} timmar = ${formatNumber(correctAnswer)} mikrogram`;
+            } else if (questionType === 1) {
+                correctAnswer = strengthPerHour;
+                answerUnit = "mikrogram/timme";
+                document.getElementById("problem").textContent =
+                    `Ett depotplåster har frisatt totalt ${formatNumber(totalMicrograms)} mikrogram under ${durationHours} timmar. Vilken styrka har plåstret i mikrogram per timme?`;
+                calculationText = `${formatNumber(totalMicrograms)} mikrogram ÷ ${durationHours} timmar = ${formatNumber(correctAnswer)} mikrogram/timme`;
+            } else if (questionType === 2) {
+                correctAnswer = durationHours;
+                answerUnit = "timmar";
+                document.getElementById("problem").textContent =
+                    `Ett depotplåster frisätter ${formatNumber(strengthPerHour)} mikrogram per timme. Plåstret har frisatt totalt ${formatNumber(totalMicrograms)} mikrogram. Hur många timmar har plåstret suttit på?`;
+                calculationText = `${formatNumber(totalMicrograms)} mikrogram ÷ ${formatNumber(strengthPerHour)} mikrogram/timme = ${correctAnswer} timmar`;
             } else {
-                problemText += X;
+                correctAnswer = (strengthPerHour * 24) / 1000;
+                answerUnit = "mg per dygn";
+                document.getElementById("problem").textContent =
+                    `Ett depotplåster frisätter ${formatNumber(strengthPerHour)} mikrogram per timme. Hur många mg läkemedel frisätter plåstret under ett dygn?`;
+                calculationText = `${formatNumber(strengthPerHour)} mikrogram/timme × 24 timmar = ${formatNumber(strengthPerHour * 24)} mikrogram. ${formatNumber(strengthPerHour * 24)} mikrogram ÷ 1000 = ${formatNumber(correctAnswer)} mg`;
             }
-            problemText += " ug/24h. Plåstret har suttit på patienten i ";
-            if (missing === 1) {
-                problemText += "<b>Y</b>";
-            } else {
-                problemText += Y;
-            }
-            problemText += " timmar. Patienten har totalt fått i sig ";
-            if (missing === 2) {
-                problemText += "<b>Z</b>";
-            } else {
-                problemText += Z;
-            }
-            problemText += " ug av läkemedlet.";
 
-            document.getElementById("problem").innerHTML = problemText;
-
-            // Svarslabel och placeholder beroende på vad som saknas
-            let svar = missing === 0 ? "X (styrka i ug/24h)" : missing === 1 ? "Y (timmar)" : "Z (totalt ug)";
-            document.getElementById("answerLabel").textContent = `Ange ditt svar för ${svar}:`;
-            document.getElementById("answer").value = '';
-            document.getElementById("result").textContent = '';
-            document.getElementById("calculation").textContent = '';
+            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit}:`;
+            document.getElementById("answer").value = "";
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").textContent = "";
         }
 
         function checkAnswer() {
-            let studentAnswer = parseInt(document.getElementById("answer").value);
-            let correctAnswer, calculationText;
+            const rawAnswer = document.getElementById("answer").value.trim().replace(",", ".");
+            const studentAnswer = Number(rawAnswer);
+            const roundedCorrect = Math.round((correctAnswer + Number.EPSILON) * 100) / 100;
 
-            if (missing === 0) {
-                // X = Z * 24 / Y
-                correctAnswer = Math.round(Z * 24 / Y);
-                calculationText = `${Z} ug × 24 ÷ ${Y} timmar = ${correctAnswer} ug/24h`;
-            } else if (missing === 1) {
-                // Y = Z * 24 / X
-                correctAnswer = Math.round(Z * 24 / X);
-                calculationText = `${Z} ug × 24 ÷ ${X} ug/24h = ${correctAnswer} timmar`;
-            } else {
-                // Z = X / 24 × Y
-                correctAnswer = Math.round(X / 24 * Y);
-                calculationText = `${X} ug/24h ÷ 24 × ${Y} timmar = ${correctAnswer} ug`;
+            if (rawAnswer === "" || !Number.isFinite(studentAnswer)) {
+                document.getElementById("result").textContent = "Skriv ett giltigt tal.";
+                document.getElementById("result").style.color = "#a33";
+                document.getElementById("calculation").textContent = "";
+                return;
             }
 
-            if (studentAnswer === correctAnswer) {
+            if (Math.abs(studentAnswer - roundedCorrect) < 0.005) {
                 document.getElementById("result").textContent = "Rätt svar!";
                 document.getElementById("result").style.color = "#195";
             } else {
-                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${correctAnswer}.`;
+                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${formatNumber(roundedCorrect)} ${answerUnit}.`;
                 document.getElementById("result").style.color = "#a33";
             }
+
             document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
         }
 
-        // Slumpa ett första problem vid sidladdning
+        document.getElementById("answer").addEventListener("keydown", event => {
+            if (event.key === "Enter") checkAnswer();
+        });
+
         window.onload = randomizeValues;
     </script>
 </body>
