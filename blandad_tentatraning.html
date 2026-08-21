@@ -15,6 +15,8 @@
         .back-link:hover { text-decoration: underline; color: #199; }
         #areaName { font-weight: bold; color: #195; margin: 22px 0 8px; }
         iframe { width: 100%; height: 760px; border: 1px solid #ddd; border-radius: 12px; background: #f7f7f7; }
+        .next-button { display: none; position: sticky; bottom: 16px; margin: 18px auto 0; padding: 12px 22px; box-shadow: 0 4px 14px #0002; }
+        .next-button.visible { display: block; }
         @media (max-width: 840px) {
             .container { margin: 16px; padding: 22px 18px; }
             iframe { height: 820px; }
@@ -29,6 +31,7 @@
         <a class="back-link" href="index.html">Till startsidan</a>
         <p id="areaName" aria-live="polite"></p>
         <iframe id="exerciseFrame" title="Slumpad läkemedelsberäkningsuppgift"></iframe>
+        <button id="nextButton" class="next-button" type="button" onclick="randomizeExercise()">Nästa blandade uppgift</button>
     </main>
 
     <script>
@@ -58,6 +61,28 @@
             : "grund";
         const availablePages = level === "avancerad" ? advancedPages : basicPages;
         let previousFile = "";
+        let answerObserver;
+
+        function watchForAnsweredExercise() {
+            if (answerObserver) answerObserver.disconnect();
+
+            try {
+                const frameDocument = document.getElementById("exerciseFrame").contentDocument;
+                const resultElement = frameDocument && frameDocument.getElementById("result");
+                if (!resultElement) return;
+
+                answerObserver = new MutationObserver(() => {
+                    if (resultElement.textContent.trim() !== "") {
+                        document.getElementById("nextButton").classList.add("visible");
+                    }
+                });
+                answerObserver.observe(resultElement, { childList: true, subtree: true, characterData: true });
+            } catch (error) {
+                // På den publicerade webbplatsen ligger alla sidor på samma domän.
+                // Knappen högst upp fungerar alltid även om en lokal förhandsvisning
+                // skulle blockera läsning mellan ramarna.
+            }
+        }
 
         function randomizeExercise() {
             let selectedPage;
@@ -66,6 +91,7 @@
             } while (selectedPage.file === previousFile && availablePages.length > 1);
 
             previousFile = selectedPage.file;
+            document.getElementById("nextButton").classList.remove("visible");
             document.getElementById("areaName").textContent = `Övningsområde: ${selectedPage.name}`;
             document.getElementById("exerciseFrame").src = `${selectedPage.file}?blandad=${Date.now()}`;
         }
@@ -80,6 +106,7 @@
                 "Varje knapptryck slumpar en ny uppgift från grundområdena, utan syrgas och procenträkning.";
         }
 
+        document.getElementById("exerciseFrame").addEventListener("load", watchForAnsweredExercise);
         randomizeExercise();
     </script>
 </body>
