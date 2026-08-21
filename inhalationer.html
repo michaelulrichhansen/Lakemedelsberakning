@@ -20,81 +20,80 @@
         <p id="question" style="font-weight:bold;"></p>
         <button onclick="randomizeValues()">Slumpa värden</button>
         <br><br>
-        <label for="answer">Ange ditt svar (heltal):</label>
-        <input type="number" id="answer" placeholder="Avrunda till heltal">
+        <label id="answerLabel" for="answer">Ange ditt svar (heltal):</label>
+        <input type="number" id="answer" placeholder="Svara med heltal">
         <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result"></p>
         <p id="calculation"></p>
-        <p style="font-size:0.95em;color:#444;">Avrunda ditt svar till närmaste heltal. Rätt svar kommer också att avrundas till närmaste heltal.</p>
+        <p style="font-size:0.95em;color:#444;">Svara med ett heltal.</p>
     </div>
     <script>
-        var X, Y, Z, missing;
+        const dosesPerInhalation = [50, 100, 200, 250, 400];
+        const inhalationCounts = [1, 2, 3, 4];
+
+        let dosePerInhalation, numberOfInhalations, totalDose;
+        let questionType, correctAnswer, answerUnit, calculationText;
+
+        const pick = values => values[Math.floor(Math.random() * values.length)];
 
         function randomizeValues() {
-            X = Math.floor(Math.random() * (1000 - 10 + 1)) + 10;
-            Y = Math.floor(Math.random() * (50 - 1 + 1)) + 1;
-            Z = Math.floor(Math.random() * (10 - 1 + 1)) + 1;
+            dosePerInhalation = pick(dosesPerInhalation);
+            numberOfInhalations = pick(inhalationCounts);
+            totalDose = dosePerInhalation * numberOfInhalations;
+            questionType = Math.floor(Math.random() * 3);
 
-            // Ensure X is always greater than Y and Z
-            while (X <= Y || X <= Z) {
-                X = Math.floor(Math.random() * (1000 - 10 + 1)) + 10;
-            }
+            let questionText = "";
 
-            // Choose a random variable to hide
-            missing = Math.floor(Math.random() * 3);
-
-            var questionText = "En läkare ordinerar ett läkemedel på ";
-            if (missing == 0) {
-                questionText += "<b>X</b> mg. ";
+            if (questionType === 0) {
+                correctAnswer = numberOfInhalations;
+                answerUnit = "inhalationer";
+                questionText = `En patient är ordinerad en total dos på ${totalDose} mikrogram. Inhalatorn ger ${dosePerInhalation} mikrogram per inhalation. Hur många inhalationer ska patienten ta?`;
+                calculationText = `${totalDose} mikrogram ÷ ${dosePerInhalation} mikrogram/inhalation = ${correctAnswer} inhalationer`;
+            } else if (questionType === 1) {
+                correctAnswer = totalDose;
+                answerUnit = "mikrogram";
+                questionText = `En inhalator ger ${dosePerInhalation} mikrogram per inhalation. Patienten ska ta ${numberOfInhalations} inhalationer. Hur stor total dos i mikrogram får patienten?`;
+                calculationText = `${dosePerInhalation} mikrogram/inhalation × ${numberOfInhalations} inhalationer = ${correctAnswer} mikrogram`;
             } else {
-                questionText += X + " mg. ";
-            }
-            questionText += "Läkemedlet ger ";
-            if (missing == 1) {
-                questionText += "<b>Y</b> mg/inhalation. ";
-            } else {
-                questionText += Y + " mg/inhalation. ";
-            }
-            questionText += "Patienten ska ta ";
-            if (missing == 2) {
-                questionText += "<b>Z</b> antal inhalationer.";
-            } else {
-                questionText += Z + " antal inhalationer.";
+                correctAnswer = dosePerInhalation;
+                answerUnit = "mikrogram/inhalation";
+                questionText = `En patient får en total dos på ${totalDose} mikrogram fördelad på ${numberOfInhalations} inhalationer. Hur många mikrogram innehåller varje inhalation?`;
+                calculationText = `${totalDose} mikrogram ÷ ${numberOfInhalations} inhalationer = ${correctAnswer} mikrogram/inhalation`;
             }
 
-            document.getElementById("question").innerHTML = questionText;
-            document.getElementById("result").textContent = '';
-            document.getElementById("calculation").textContent = '';
-            document.getElementById("answer").value = '';
+            document.getElementById("question").textContent = questionText;
+            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit} (heltal):`;
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").textContent = "";
+            document.getElementById("answer").value = "";
         }
 
         function checkAnswer() {
-            var answer = parseInt(document.getElementById("answer").value);
-            var correctAnswer, calculationText;
+            const rawAnswer = document.getElementById("answer").value.trim().replace(",", ".");
+            const studentAnswer = Number(rawAnswer);
 
-            if (missing == 0) {
-                correctAnswer = Math.round(Y * Z);
-                calculationText = `${Y} mg/inhalation × ${Z} inhalationer = ${correctAnswer} mg`;
-            } else if (missing == 1) {
-                correctAnswer = Math.round(X / Z);
-                calculationText = `${X} mg ÷ ${Z} inhalationer = ${correctAnswer} mg/inhalation`;
-            } else {
-                correctAnswer = Math.round(X / Y);
-                calculationText = `${X} mg ÷ ${Y} mg/inhalation = ${correctAnswer} inhalationer`;
+            if (rawAnswer === "" || !Number.isFinite(studentAnswer)) {
+                document.getElementById("result").textContent = "Skriv ett giltigt tal.";
+                document.getElementById("result").style.color = "#a33";
+                document.getElementById("calculation").textContent = "";
+                return;
             }
 
-            if (answer === correctAnswer) {
+            if (studentAnswer === correctAnswer) {
                 document.getElementById("result").textContent = "Rätt svar!";
                 document.getElementById("result").style.color = "#195";
             } else {
-                document.getElementById("result").textContent = "Fel svar. Det rätta svaret är " + correctAnswer + ".";
+                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${correctAnswer} ${answerUnit}.`;
                 document.getElementById("result").style.color = "#a33";
             }
 
             document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
         }
 
-        // Slumpa ett första problem vid sidladdning
+        document.getElementById("answer").addEventListener("keydown", event => {
+            if (event.key === "Enter") checkAnswer();
+        });
+
         window.onload = randomizeValues;
     </script>
 </body>
