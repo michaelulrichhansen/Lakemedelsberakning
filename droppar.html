@@ -25,12 +25,21 @@
         <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result"></p>
         <p id="calculation"></p>
-        <p style="font-size:0.95em;color:#444;">Avrunda till en decimal vid behov. Både punkt och komma accepteras.</p>
+        <p style="font-size:0.95em;color:#444;">Avrunda till två decimaler vid behov. Både punkt och komma accepteras.</p>
     </div>
     <script>
         const dropsPerMlValues = [15, 20, 25];
         const doseVolumes = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5];
         const bottleVolumes = [10, 15, 20, 30];
+        const medicationCases = [
+            { drops: 20, dropsPerMl: 16, strength: 0.8 },
+            { drops: 18, dropsPerMl: 20, strength: 2 },
+            { drops: 24, dropsPerMl: 20, strength: 1.5 },
+            { drops: 15, dropsPerMl: 20, strength: 2 },
+            { drops: 30, dropsPerMl: 20, strength: 1 },
+            { drops: 12, dropsPerMl: 15, strength: 2.5 },
+            { drops: 25, dropsPerMl: 20, strength: 0.8 }
+        ];
 
         let dropsPerMl, doseVolume, dropsPerDose, bottleVolume, numberOfDoses;
         let questionType, correctAnswer, answerUnit, calculationText;
@@ -38,7 +47,7 @@
         const pick = values => values[Math.floor(Math.random() * values.length)];
 
         function formatNumber(value) {
-            return Number(value.toFixed(1)).toString().replace(".", ",");
+            return Number(value.toFixed(2)).toString().replace(".", ",");
         }
 
         function createConsistentValues() {
@@ -52,33 +61,27 @@
         }
 
         function randomizeValues() {
-            createConsistentValues();
-            questionType = Math.floor(Math.random() * 3);
+            randomizeMedicationCase();
+        }
 
-            if (questionType === 0) {
-                correctAnswer = doseVolume;
-                answerUnit = "mL";
-                document.getElementById("problem").textContent =
-                    `En patient är ordinerad ${dropsPerDose} droppar av ett läkemedel. Enligt flaskans anvisning motsvarar ${dropsPerMl} droppar 1 mL. Hur många mL ska patienten få?`;
-                calculationText = `${dropsPerDose} droppar ÷ ${dropsPerMl} droppar/mL = ${formatNumber(correctAnswer)} mL`;
-            } else if (questionType === 1) {
-                correctAnswer = dropsPerDose;
-                answerUnit = "droppar";
-                document.getElementById("problem").textContent =
-                    `En patient ska få ${formatNumber(doseVolume)} mL av ett läkemedel. Enligt flaskans anvisning motsvarar ${dropsPerMl} droppar 1 mL. Hur många droppar ska patienten få?`;
-                calculationText = `${formatNumber(doseVolume)} mL × ${dropsPerMl} droppar/mL = ${correctAnswer} droppar`;
-            } else {
-                correctAnswer = numberOfDoses;
-                answerUnit = "doser";
-                document.getElementById("problem").textContent =
-                    `En flaska innehåller ${bottleVolume} mL läkemedel. En dos är ${dropsPerDose} droppar och ${dropsPerMl} droppar motsvarar 1 mL. Till hur många hela doser räcker flaskan?`;
-                calculationText = `Dosvolym: ${dropsPerDose} droppar ÷ ${dropsPerMl} droppar/mL = ${formatNumber(doseVolume)} mL. ${bottleVolume} mL ÷ ${formatNumber(doseVolume)} mL/dos = ${correctAnswer} doser`;
-            }
+        function randomizeMedicationCase() {
+            const currentCase = pick(medicationCases);
+            const volumeMl = currentCase.drops / currentCase.dropsPerMl;
+            const doseMg = volumeMl * currentCase.strength;
 
-            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit}:`;
+            correctAnswer = doseMg;
+            answerUnit = "mg";
+            calculationText =
+                `${currentCase.drops} droppar ÷ ${currentCase.dropsPerMl} droppar/mL = ${formatNumber(volumeMl)} mL<br>` +
+                `${formatNumber(volumeMl)} mL × ${formatNumber(currentCase.strength)} mg/mL = ${formatNumber(doseMg)} mg`;
+
+            document.getElementById("problem").textContent =
+                `En patient ordineras ${currentCase.drops} ögondroppar med styrkan ${formatNumber(currentCase.strength)} mg/mL. ` +
+                `Enligt flaskans anvisning motsvarar 1 mL ${currentCase.dropsPerMl} droppar. Hur många mg läkemedel har patienten fått?`;
+            document.getElementById("answerLabel").textContent = "Ange ditt svar i mg:";
             document.getElementById("answer").value = "";
             document.getElementById("result").textContent = "";
-            document.getElementById("calculation").textContent = "";
+            document.getElementById("calculation").innerHTML = "";
         }
 
         function checkAnswer() {
@@ -88,7 +91,7 @@
             if (rawAnswer === "" || !Number.isFinite(studentAnswer)) {
                 document.getElementById("result").textContent = "Skriv ett giltigt tal.";
                 document.getElementById("result").style.color = "#a33";
-                document.getElementById("calculation").textContent = "";
+                document.getElementById("calculation").innerHTML = "";
                 return;
             }
 
@@ -100,7 +103,7 @@
                 document.getElementById("result").style.color = "#a33";
             }
 
-            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
+            document.getElementById("calculation").innerHTML = `<strong>Beräkning:</strong><br>${calculationText}`;
         }
 
         document.getElementById("answer").addEventListener("keydown", event => {
