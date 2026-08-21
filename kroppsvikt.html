@@ -8,7 +8,7 @@
         h1 { color: #195; }
         .card { background: #fff; padding: 32px; max-width: 480px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
         label, input, button { font-size: 1rem; margin-top: 12px; }
-        input[type="number"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
         button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
         #result { font-weight: bold; margin-top: 16px;}
         #calculation { color: #555; }
@@ -20,8 +20,8 @@
         <p id="problem"></p>
         <button onclick="randomizeValues()">Slumpa värden</button>
         <br><br>
-        <label id="answerLabel" for="answer">Ange ditt svar (heltal):</label>
-        <input type="number" id="answer" placeholder="Skriv ditt svar här (heltal)">
+        <label id="answerLabel" for="answer"></label>
+        <input type="text" id="answer" placeholder="Skriv ditt svar här">
         <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result"></p>
         <p id="calculation"></p>
@@ -29,41 +29,76 @@
     <script>
         const dosesPerKg = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40];
         const weightsKg = [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100];
+        const unitsCases = [
+            { drug: "insulin", weight: 65, unitsPerKg: 0.4, strength: 100 },
+            { drug: "insulin", weight: 70, unitsPerKg: 0.4, strength: 100 },
+            { drug: "insulin", weight: 72, unitsPerKg: 0.4, strength: 100 },
+            { drug: "insulin", weight: 78, unitsPerKg: 0.4, strength: 100 },
+            { drug: "insulin", weight: 80, unitsPerKg: 0.5, strength: 100 },
+            { drug: "heparin", weight: 60, unitsPerKg: 50, strength: 2500 },
+            { drug: "heparin", weight: 70, unitsPerKg: 75, strength: 2500 },
+            { drug: "heparin", weight: 72, unitsPerKg: 100, strength: 4500 },
+            { drug: "heparin", weight: 75, unitsPerKg: 100, strength: 5000 },
+            { drug: "heparin", weight: 80, unitsPerKg: 75, strength: 5000 },
+            { drug: "heparin", weight: 90, unitsPerKg: 100, strength: 5000 }
+        ];
 
-        let dosePerKg, weight, totalDose, questionType, correctAnswer, calculationText, answerUnit;
-
+        let correctAnswer, calculationText, answerUnit, expectedDecimals;
         const pick = values => values[Math.floor(Math.random() * values.length)];
 
-        function randomizeValues() {
-            dosePerKg = pick(dosesPerKg);
-            weight = pick(weightsKg);
-            totalDose = dosePerKg * weight;
-            questionType = Math.floor(Math.random() * 3);
+        function formatNumber(value, decimals = 2) {
+            return Number(value.toFixed(decimals)).toString().replace(".", ",");
+        }
 
-            let problemText = "";
+        function randomizeValues() {
+            if (Math.random() < 0.4) randomizeUnitsCase();
+            else randomizeMgCase();
+
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").innerHTML = "";
+            document.getElementById("answer").value = "";
+        }
+
+        function randomizeMgCase() {
+            const dosePerKg = pick(dosesPerKg);
+            const weight = pick(weightsKg);
+            const totalDose = dosePerKg * weight;
+            const questionType = Math.floor(Math.random() * 3);
+            expectedDecimals = 0;
 
             if (questionType === 0) {
                 correctAnswer = totalDose;
                 answerUnit = "mg";
-                problemText = `En patient väger <strong>${weight} kg</strong>. Läkemedlet ska doseras med <strong>${dosePerKg} mg/kg kroppsvikt</strong>. Hur stor total dos i <strong>mg</strong> ska patienten få?`;
+                document.getElementById("problem").innerHTML = `En patient väger <strong>${weight} kg</strong>. Läkemedlet ska doseras med <strong>${dosePerKg} mg/kg kroppsvikt</strong>. Hur stor total dos i <strong>mg</strong> ska patienten få?`;
                 calculationText = `${dosePerKg} mg/kg × ${weight} kg = ${correctAnswer} mg`;
             } else if (questionType === 1) {
                 correctAnswer = dosePerKg;
                 answerUnit = "mg/kg";
-                problemText = `En patient väger <strong>${weight} kg</strong> och ska få en total dos på <strong>${totalDose} mg</strong>. Hur många <strong>mg/kg kroppsvikt</strong> motsvarar detta?`;
+                document.getElementById("problem").innerHTML = `En patient väger <strong>${weight} kg</strong> och ska få en total dos på <strong>${totalDose} mg</strong>. Hur många <strong>mg/kg kroppsvikt</strong> motsvarar detta?`;
                 calculationText = `${totalDose} mg ÷ ${weight} kg = ${correctAnswer} mg/kg`;
             } else {
                 correctAnswer = weight;
                 answerUnit = "kg";
-                problemText = `Ett läkemedel ska doseras med <strong>${dosePerKg} mg/kg kroppsvikt</strong>. Patienten ska få en total dos på <strong>${totalDose} mg</strong>. Hur mycket väger patienten i <strong>kg</strong>?`;
+                document.getElementById("problem").innerHTML = `Ett läkemedel ska doseras med <strong>${dosePerKg} mg/kg kroppsvikt</strong>. Patienten ska få en total dos på <strong>${totalDose} mg</strong>. Hur mycket väger patienten i <strong>kg</strong>?`;
                 calculationText = `${totalDose} mg ÷ ${dosePerKg} mg/kg = ${correctAnswer} kg`;
             }
 
-            document.getElementById("problem").innerHTML = problemText;
             document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit} (heltal):`;
-            document.getElementById("result").textContent = "";
-            document.getElementById("calculation").textContent = "";
-            document.getElementById("answer").value = "";
+        }
+
+        function randomizeUnitsCase() {
+            const currentCase = pick(unitsCases);
+            const totalUnits = currentCase.weight * currentCase.unitsPerKg;
+            const volumeMl = totalUnits / currentCase.strength;
+            const solutionName = currentCase.drug === "insulin" ? "Insulinlösningen" : "Heparinlösningen";
+
+            correctAnswer = Math.round((volumeMl + Number.EPSILON) * 10) / 10;
+            expectedDecimals = 1;
+            answerUnit = "mL";
+
+            document.getElementById("problem").innerHTML = `En patient väger <strong>${currentCase.weight} kg</strong> och ska ha <strong>${formatNumber(currentCase.unitsPerKg)} E/kg</strong> ${currentCase.drug}. ${solutionName} har styrkan <strong>${currentCase.strength} E/mL</strong>. Hur många <strong>mL</strong> ska ges? Avrunda till en decimal.`;
+            calculationText = `${currentCase.weight} kg × ${formatNumber(currentCase.unitsPerKg)} E/kg = ${formatNumber(totalUnits)} E<br>${formatNumber(totalUnits)} E ÷ ${currentCase.strength} E/mL = ${formatNumber(volumeMl, 3)} mL ≈ ${formatNumber(correctAnswer, 1)} mL`;
+            document.getElementById("answerLabel").textContent = "Ange ditt svar i mL (en decimal):";
         }
 
         function checkAnswer() {
@@ -73,19 +108,19 @@
             if (rawAnswer === "" || !Number.isFinite(studentAnswer)) {
                 document.getElementById("result").textContent = "Skriv ett giltigt tal.";
                 document.getElementById("result").style.color = "#a33";
-                document.getElementById("calculation").textContent = "";
+                document.getElementById("calculation").innerHTML = "";
                 return;
             }
 
-            if (studentAnswer === correctAnswer) {
+            if (Math.abs(studentAnswer - correctAnswer) < 0.0005) {
                 document.getElementById("result").textContent = "Rätt svar!";
                 document.getElementById("result").style.color = "#195";
             } else {
-                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${correctAnswer} ${answerUnit}.`;
+                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${formatNumber(correctAnswer, expectedDecimals)} ${answerUnit}.`;
                 document.getElementById("result").style.color = "#a33";
             }
 
-            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
+            document.getElementById("calculation").innerHTML = `<strong>Beräkning:</strong><br>${calculationText}`;
         }
 
         document.getElementById("answer").addEventListener("keydown", event => {
