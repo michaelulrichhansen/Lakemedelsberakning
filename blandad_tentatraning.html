@@ -61,19 +61,44 @@
         const availablePages = level === "avancerad" ? advancedPages : basicPages;
         let previousFile = "";
         let answerObserver;
+        let frameResizeObserver;
+
+        function updateFrameHeight() {
+            try {
+                const frame = document.getElementById("exerciseFrame");
+                const frameDocument = frame.contentDocument;
+                if (!frameDocument) return;
+
+                const bodyHeight = frameDocument.body ? frameDocument.body.scrollHeight : 0;
+                const documentHeight = frameDocument.documentElement
+                    ? frameDocument.documentElement.scrollHeight
+                    : 0;
+                const contentHeight = Math.max(bodyHeight, documentHeight, 420);
+                frame.style.height = `${contentHeight + 24}px`;
+            } catch (error) {
+                // Den fasta höjden i sidans CSS används som reserv.
+            }
+        }
 
         function watchForAnsweredExercise() {
             if (answerObserver) answerObserver.disconnect();
+            if (frameResizeObserver) frameResizeObserver.disconnect();
 
             try {
                 const frameDocument = document.getElementById("exerciseFrame").contentDocument;
                 const resultElement = frameDocument && frameDocument.getElementById("result");
                 if (!resultElement) return;
 
+                updateFrameHeight();
+                frameResizeObserver = new ResizeObserver(updateFrameHeight);
+                if (frameDocument.body) frameResizeObserver.observe(frameDocument.body);
+                if (frameDocument.documentElement) frameResizeObserver.observe(frameDocument.documentElement);
+
                 answerObserver = new MutationObserver(() => {
                     if (resultElement.textContent.trim() !== "") {
                         document.getElementById("nextButton").classList.add("visible");
                     }
+                    updateFrameHeight();
                 });
                 answerObserver.observe(resultElement, { childList: true, subtree: true, characterData: true });
             } catch (error) {
