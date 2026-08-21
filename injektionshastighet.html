@@ -33,10 +33,10 @@
         const ratesMgMin = [0.2, 0.25, 0.4, 0.5, 0.6, 0.75, 0.8, 1, 1.2, 1.5, 2];
         const strengthsMgMl = [2.5, 5, 10, 20, 25, 50];
         const timesMin = [5, 10, 15, 20, 25, 30];
-
         let correctAnswer = 0;
         let calcText = "";
         let answerUnit = "";
+        let answerDecimals = 2;
 
         const pick = values => values[Math.floor(Math.random() * values.length)];
 
@@ -45,6 +45,7 @@
         }
 
         function randomizeCase() {
+            answerDecimals = 2;
             // Fyra av fem uppgifter är flerstegsuppgifter som i exemplet.
             const type = Math.floor(Math.random() * 5);
             const strength = pick(strengthsMgMl);
@@ -85,7 +86,8 @@
         function checkAnswer() {
             const rawAnswer = document.getElementById("answer").value.trim().replace(",", ".");
             const userAnswer = Number(rawAnswer);
-            const roundedCorrect = Math.round((correctAnswer + Number.EPSILON) * 100) / 100;
+            const factor = 10 ** answerDecimals;
+            const roundedCorrect = Math.round((correctAnswer + Number.EPSILON) * factor) / factor;
 
             if (rawAnswer === "" || !Number.isFinite(userAnswer)) {
                 document.getElementById("result").textContent = "Skriv ett giltigt tal.";

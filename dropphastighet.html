@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
-    <title>Läkemedelsberäkning – Dropphastighet</title>
+    <title>Läkemedelsberäkning – Infusions- och dropphastighet</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
         h1 { color: #195; }
@@ -16,26 +16,39 @@
 </head>
 <body>
     <div class="card">
-        <h1>Läkemedelsberäkning<br>Dropphastighet</h1>
+        <h1>Läkemedelsberäkning<br>Infusions- och dropphastighet</h1>
         <p id="problemText"></p>
         <button onclick="randomizeValues()">Slumpa värden</button>
         <br><br>
         <label for="studentAnswer" id="answerLabel"></label>
-        <input type="number" id="studentAnswer" placeholder="Svara med heltal">
+        <input type="text" id="studentAnswer" placeholder="Ditt svar">
         <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result"></p>
         <p id="calculation"></p>
-        <p style="font-size:0.95em;color:#444;">Svara med ett heltal.</p>
+        <p style="font-size:0.95em;color:#444;">Avrunda enligt instruktionen. Både punkt och komma accepteras.</p>
     </div>
     <script>
         const volumesMl = [100, 150, 200, 250, 300, 500, 1000];
         const timesMin = [30, 40, 50, 60, 75, 100, 120, 125, 150, 200, 240, 250, 300, 400, 500];
         const dropFactor = 20;
+        const infusionFlowCases = [
+            { liters: 1.5, hours: 6, decimals: 0 },
+            { liters: 2, hours: 10, decimals: 0 },
+            { liters: 2, hours: 12, decimals: 1 },
+            { liters: 0.6, hours: 5, decimals: 0 },
+            { liters: 1, hours: 6, decimals: 1 },
+            { liters: 1, hours: 8, decimals: 1 },
+            { liters: 1.2, hours: 8, decimals: 1 }
+        ];
 
         let volume, time, dropsPerMinute, questionType;
-        let correctAnswer, answerUnit, calculationText;
+        let correctAnswer, answerUnit, calculationText, answerDecimals;
 
         const pick = values => values[Math.floor(Math.random() * values.length)];
+
+        function formatNumber(value, decimals = 2) {
+            return Number(value.toFixed(decimals)).toString().replace(".", ",");
+        }
 
         function createConsistentValues() {
             do {
@@ -47,7 +60,8 @@
 
         function randomizeValues() {
             createConsistentValues();
-            questionType = Math.floor(Math.random() * 3);
+            questionType = Math.floor(Math.random() * 4);
+            answerDecimals = 0;
 
             if (questionType === 0) {
                 correctAnswer = dropsPerMinute;
@@ -61,18 +75,40 @@
                 document.getElementById("problemText").textContent =
                     `En infusion ges med ${dropsPerMinute} droppar/minut under ${time} minuter. Infusionsaggregatet ger ${dropFactor} droppar/mL. Hur stor volym i mL har administrerats?`;
                 calculationText = `${dropsPerMinute} droppar/min × ${time} min ÷ ${dropFactor} droppar/mL = ${correctAnswer} mL`;
-            } else {
+            } else if (questionType === 2) {
                 correctAnswer = time;
                 answerUnit = "minuter";
                 document.getElementById("problemText").textContent =
                     `En patient ska få ${volume} mL infusionsvätska. Dropphastigheten är ${dropsPerMinute} droppar/minut och infusionsaggregatet ger ${dropFactor} droppar/mL. Hur många minuter tar infusionen?`;
                 calculationText = `${volume} mL × ${dropFactor} droppar/mL ÷ ${dropsPerMinute} droppar/min = ${correctAnswer} minuter`;
+            } else {
+                const currentCase = pick(infusionFlowCases);
+                const volumeMl = currentCase.liters * 1000;
+                const timeMinutes = currentCase.hours * 60;
+                const unroundedAnswer = volumeMl / timeMinutes;
+                const factor = 10 ** currentCase.decimals;
+
+                answerDecimals = currentCase.decimals;
+                correctAnswer = Math.round((unroundedAnswer + Number.EPSILON) * factor) / factor;
+                answerUnit = "mL/minut";
+                document.getElementById("problemText").textContent =
+                    `En infusion på ${formatNumber(currentCase.liters)} L ska ges under ${currentCase.hours} timmar. ` +
+                    `Vilken infusionshastighet i mL/minut behövs? ` +
+                    `Avrunda till ${answerDecimals === 0 ? "heltal" : "en decimal"}.`;
+                calculationText =
+                    `${formatNumber(currentCase.liters)} L × 1000 mL/L = ${volumeMl} mL<br>` +
+                    `${currentCase.hours} timmar × 60 min/timme = ${timeMinutes} minuter<br>` +
+                    `${volumeMl} mL ÷ ${timeMinutes} min = ${formatNumber(unroundedAnswer, 3)} mL/minut` +
+                    (Math.abs(unroundedAnswer - correctAnswer) > 0.0001
+                        ? ` ≈ ${formatNumber(correctAnswer, answerDecimals)} mL/minut`
+                        : "");
             }
 
-            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit} (heltal):`;
+            const answerFormat = answerDecimals === 0 ? "heltal" : "en decimal";
+            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit} (${answerFormat}):`;
             document.getElementById("studentAnswer").value = "";
             document.getElementById("result").textContent = "";
-            document.getElementById("calculation").textContent = "";
+            document.getElementById("calculation").innerHTML = "";
         }
 
         function checkAnswer() {
@@ -82,19 +118,19 @@
             if (rawAnswer === "" || !Number.isFinite(studentAnswer)) {
                 document.getElementById("result").textContent = "Skriv ett giltigt tal.";
                 document.getElementById("result").style.color = "#a33";
-                document.getElementById("calculation").textContent = "";
+                document.getElementById("calculation").innerHTML = "";
                 return;
             }
 
-            if (studentAnswer === correctAnswer) {
+            if (Math.abs(studentAnswer - correctAnswer) < 0.0005) {
                 document.getElementById("result").textContent = "Rätt svar!";
                 document.getElementById("result").style.color = "#195";
             } else {
-                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${correctAnswer} ${answerUnit}.`;
+                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${formatNumber(correctAnswer, answerDecimals)} ${answerUnit}.`;
                 document.getElementById("result").style.color = "#a33";
             }
 
-            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
+            document.getElementById("calculation").innerHTML = `<strong>Beräkning:</strong><br>${calculationText}`;
         }
 
         document.getElementById("studentAnswer").addEventListener("keydown", event => {
