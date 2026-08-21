@@ -20,48 +20,98 @@
         <p id="question"></p>
         <button onclick="randomizeValues()">Slumpa värden</button>
         <br><br>
-        <label for="answer">Ange mängd spädningsvätska (avrunda till heltal):</label>
+        <label id="answerLabel" for="answer"></label>
         <input type="number" id="answer" placeholder="Heltal">
         <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result"></p>
         <p id="calculation"></p>
-        <p style="font-size:0.95em;color:#444;">Beräkna hur mycket spädningsvätska som behövs för att späda läkemedlet till den nya styrkan.</p>
+        <p style="font-size:0.95em;color:#444;">Svara med ett heltal.</p>
     </div>
     <script>
-        let X, Y, Z;
+        const concentrationPairs = [
+            { original: 10, target: 5 },
+            { original: 20, target: 10 },
+            { original: 25, target: 5 },
+            { original: 40, target: 20 },
+            { original: 50, target: 10 },
+            { original: 50, target: 25 },
+            { original: 100, target: 10 },
+            { original: 100, target: 20 }
+        ];
+        const originalVolumes = [1, 2, 5, 10, 20];
+
+        let originalStrength, targetStrength, originalVolume, finalVolume, diluentVolume;
+        let questionType, correctAnswer, answerUnit, calculationText;
+
+        const pick = values => values[Math.floor(Math.random() * values.length)];
 
         function randomizeValues() {
-            do {
-                X = Math.floor(Math.random() * 100) + 20;  // ursprunglig styrka, lite högre lägsta för meningsfulla tal
-                Y = Math.floor(Math.random() * 50) + 1;    // ny styrka
-            } while (X <= 2 * Y);
-            Z = Math.floor(Math.random() * 100) + 1;       // mängd läkemedel
+            const pair = pick(concentrationPairs);
+            originalStrength = pair.original;
+            targetStrength = pair.target;
+            originalVolume = pick(originalVolumes);
+            finalVolume = originalVolume * (originalStrength / targetStrength);
+            diluentVolume = finalVolume - originalVolume;
+            questionType = Math.floor(Math.random() * 4);
 
-            document.getElementById('question').textContent =
-                `Du ska späda ett läkemedel med styrkan ${X} mg/mL till en ny styrka på ${Y} mg/mL. Läkemedlet finns i en mängd av ${Z} mL. Hur stor mängd spädningsvätska (i mL) behövs för att späda läkemedlet?`;
+            if (questionType === 0) {
+                correctAnswer = diluentVolume;
+                answerUnit = "mL spädningsvätska";
+                document.getElementById("question").textContent =
+                    `Du har ${originalVolume} mL läkemedel med styrkan ${originalStrength} mg/mL. Läkemedlet ska spädas till styrkan ${targetStrength} mg/mL. Hur många mL spädningsvätska ska tillsättas?`;
+                calculationText = `Slutvolym: (${originalStrength} mg/mL × ${originalVolume} mL) ÷ ${targetStrength} mg/mL = ${finalVolume} mL. Spädningsvätska: ${finalVolume} mL − ${originalVolume} mL = ${correctAnswer} mL`;
+            } else if (questionType === 1) {
+                correctAnswer = finalVolume;
+                answerUnit = "mL slutvolym";
+                document.getElementById("question").textContent =
+                    `Du har ${originalVolume} mL läkemedel med styrkan ${originalStrength} mg/mL. Läkemedlet ska spädas till styrkan ${targetStrength} mg/mL. Vilken blir den totala slutvolymen i mL?`;
+                calculationText = `(${originalStrength} mg/mL × ${originalVolume} mL) ÷ ${targetStrength} mg/mL = ${correctAnswer} mL`;
+            } else if (questionType === 2) {
+                correctAnswer = targetStrength;
+                answerUnit = "mg/mL";
+                document.getElementById("question").textContent =
+                    `Du har ${originalVolume} mL läkemedel med styrkan ${originalStrength} mg/mL och tillsätter ${diluentVolume} mL spädningsvätska. Vilken styrka i mg/mL får den färdigspädda lösningen?`;
+                calculationText = `Slutvolym: ${originalVolume} mL + ${diluentVolume} mL = ${finalVolume} mL. (${originalStrength} mg/mL × ${originalVolume} mL) ÷ ${finalVolume} mL = ${correctAnswer} mg/mL`;
+            } else {
+                correctAnswer = originalVolume;
+                answerUnit = "mL läkemedel";
+                document.getElementById("question").textContent =
+                    `Du ska bereda ${finalVolume} mL lösning med styrkan ${targetStrength} mg/mL. Det koncentrerade läkemedlet har styrkan ${originalStrength} mg/mL. Hur många mL av det koncentrerade läkemedlet behövs?`;
+                calculationText = `(${targetStrength} mg/mL × ${finalVolume} mL) ÷ ${originalStrength} mg/mL = ${correctAnswer} mL`;
+            }
 
-            document.getElementById('result').textContent = '';
-            document.getElementById('calculation').textContent = '';
-            document.getElementById('answer').value = '';
+            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit} (heltal):`;
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").textContent = "";
+            document.getElementById("answer").value = "";
         }
 
         function checkAnswer() {
-            const studentAnswer = parseInt(document.getElementById('answer').value, 10);
-            // Formeln: (X * Z / Y) - Z = mängd spädningsvätska
-            const correctAnswer = Math.round(((X * Z) / Y) - Z);
-            const calcText = `Beräkning: (${X} mg/mL × ${Z} mL) ÷ ${Y} mg/mL - ${Z} mL = ${correctAnswer} mL`;
+            const rawAnswer = document.getElementById("answer").value.trim().replace(",", ".");
+            const studentAnswer = Number(rawAnswer);
+
+            if (rawAnswer === "" || !Number.isFinite(studentAnswer)) {
+                document.getElementById("result").textContent = "Skriv ett giltigt tal.";
+                document.getElementById("result").style.color = "#a33";
+                document.getElementById("calculation").textContent = "";
+                return;
+            }
 
             if (studentAnswer === correctAnswer) {
-                document.getElementById('result').textContent = "Rätt svar!";
-                document.getElementById('result').style.color = "#195";
+                document.getElementById("result").textContent = "Rätt svar!";
+                document.getElementById("result").style.color = "#195";
             } else {
-                document.getElementById('result').textContent = `Fel svar. Det rätta svaret är ${correctAnswer} mL.`;
-                document.getElementById('result').style.color = "#a33";
+                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${correctAnswer} ${answerUnit}.`;
+                document.getElementById("result").style.color = "#a33";
             }
-            document.getElementById('calculation').textContent = calcText;
+
+            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
         }
 
-        // Starta med en slumpad fråga direkt
+        document.getElementById("answer").addEventListener("keydown", event => {
+            if (event.key === "Enter") checkAnswer();
+        });
+
         window.onload = randomizeValues;
     </script>
 </body>
