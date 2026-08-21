@@ -29,9 +29,21 @@
     <script>
         const dosesPerSquareMeter = [10, 20, 25, 30, 40, 50, 75, 100, 125, 150, 200, 250, 300, 400, 500];
         const bodySurfaces = [0.5, 0.6, 0.8, 1, 1.2, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.1, 2.2];
+        const volumeCases = [
+            { dosePerSquareMeter: 40, bodySurface: 1.5, strength: 20 },
+            { dosePerSquareMeter: 50, bodySurface: 1.8, strength: 15 },
+            { dosePerSquareMeter: 60, bodySurface: 1.5, strength: 30 },
+            { dosePerSquareMeter: 70, bodySurface: 2, strength: 35 },
+            { dosePerSquareMeter: 75, bodySurface: 1.6, strength: 30 },
+            { dosePerSquareMeter: 80, bodySurface: 1.7, strength: 20 },
+            { dosePerSquareMeter: 90, bodySurface: 1.8, strength: 30 },
+            { dosePerSquareMeter: 100, bodySurface: 1.6, strength: 40 },
+            { dosePerSquareMeter: 125, bodySurface: 2, strength: 50 }
+        ];
 
         let dosePerSquareMeter, bodySurface, totalDose, questionType;
         let correctAnswer, calculationText, answerUnit, expectedDecimals;
+        let nextIsVolumeCase = true;
 
         const pick = values => values[Math.floor(Math.random() * values.length)];
 
@@ -40,6 +52,14 @@
         }
 
         function randomizeValues() {
+            if (nextIsVolumeCase) {
+                nextIsVolumeCase = false;
+                randomizeVolumeCase();
+                return;
+            }
+
+            nextIsVolumeCase = true;
+
             dosePerSquareMeter = pick(dosesPerSquareMeter);
             bodySurface = pick(bodySurfaces);
             totalDose = Number((dosePerSquareMeter * bodySurface).toFixed(1));
@@ -72,7 +92,33 @@
             document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit} (${decimalText}):`;
             document.getElementById("answer").placeholder = expectedDecimals === 0 ? "Heltal" : "t.ex. 1,2";
             document.getElementById("result").textContent = "";
-            document.getElementById("calculation").textContent = "";
+            document.getElementById("calculation").innerHTML = "";
+            document.getElementById("answer").value = "";
+        }
+
+        function randomizeVolumeCase() {
+            const currentCase = pick(volumeCases);
+            const calculatedDose = currentCase.dosePerSquareMeter * currentCase.bodySurface;
+            const volume = calculatedDose / currentCase.strength;
+
+            correctAnswer = volume;
+            answerUnit = "mL";
+            expectedDecimals = Number.isInteger(volume) ? 0 : 1;
+            calculationText =
+                `${currentCase.dosePerSquareMeter} mg/m² × ${formatNumber(currentCase.bodySurface, 1)} m² = ${formatNumber(calculatedDose, 1)} mg<br>` +
+                `${formatNumber(calculatedDose, 1)} mg ÷ ${currentCase.strength} mg/mL = ${formatNumber(volume, 1)} mL`;
+
+            document.getElementById("problem").innerHTML =
+                `Standarddosen för ett läkemedel är <strong>${currentCase.dosePerSquareMeter} mg/m²</strong>. ` +
+                `Patientens kroppsyta är <strong>${formatNumber(currentCase.bodySurface, 1)} m²</strong>. ` +
+                `Läkemedlet har styrkan <strong>${currentCase.strength} mg/mL</strong>. ` +
+                `Hur många <strong>mL</strong> ska ges?`;
+
+            const decimalText = expectedDecimals === 0 ? "heltal" : "en decimal";
+            document.getElementById("answerLabel").textContent = `Ange ditt svar i mL (${decimalText}):`;
+            document.getElementById("answer").placeholder = expectedDecimals === 0 ? "Heltal" : "t.ex. 6,8";
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").innerHTML = "";
             document.getElementById("answer").value = "";
         }
 
@@ -84,7 +130,7 @@
             if (rawAnswer === "" || !Number.isFinite(studentAnswer)) {
                 document.getElementById("result").textContent = "Skriv ett giltigt tal.";
                 document.getElementById("result").style.color = "#a33";
-                document.getElementById("calculation").textContent = "";
+                document.getElementById("calculation").innerHTML = "";
                 return;
             }
 
@@ -96,7 +142,7 @@
                 document.getElementById("result").style.color = "#a33";
             }
 
-            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
+            document.getElementById("calculation").innerHTML = `<strong>Beräkning:</strong><br>${calculationText}`;
         }
 
         document.getElementById("answer").addEventListener("keydown", event => {
