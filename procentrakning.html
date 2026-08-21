@@ -36,15 +36,14 @@
     </div>
     <script>
         const percentages = [0.5, 1, 2, 2.5, 5, 10, 20];
-        const totals = [100, 200, 250, 500, 1000];
-        const percentageTypes = [
-            { code: "w/v", activeUnit: "g", totalUnit: "mL", product: "lösning", activeName: "läkemedel" },
-            { code: "w/w", activeUnit: "g", totalUnit: "g", product: "salva", activeName: "aktiv substans" },
-            { code: "v/v", activeUnit: "mL", totalUnit: "mL", product: "lösning", activeName: "substans" }
-        ];
+        const smallVolumesMl = [1, 2, 3, 5, 10, 20];
+        const largeVolumesMl = [50, 100, 150, 200, 250, 500];
+        const ointmentWeightsG = [5, 10, 20, 25, 50];
+        const volumePercentTotalsMl = [100, 200, 250, 500, 1000];
 
-        let percent, total, activeAmount, selectedType, questionDirection;
         let correctAnswer, answerUnit, calcText;
+        let questionType;
+        let nextQuestionType = 0;
 
         const pick = values => values[Math.floor(Math.random() * values.length)];
 
@@ -53,30 +52,78 @@
         }
 
         function randomizeCase() {
-            percent = pick(percentages);
-            total = pick(totals);
-            activeAmount = (percent * total) / 100;
-            selectedType = pick(percentageTypes);
-            questionDirection = Math.floor(Math.random() * 3);
+            questionType = nextQuestionType;
+            nextQuestionType = (nextQuestionType + 1) % 7;
 
-            if (questionDirection === 0) {
-                correctAnswer = activeAmount;
-                answerUnit = selectedType.activeUnit;
+            const percent = pick(percentages);
+
+            if (questionType === 0) {
+                correctAnswer = percent * 10;
+                answerUnit = "mg/mL";
                 document.getElementById("problem").textContent =
-                    `Hur många ${selectedType.activeUnit} ${selectedType.activeName} behövs för att bereda ${total} ${selectedType.totalUnit} ${selectedType.product} med styrkan ${formatNumber(percent)} % (${selectedType.code})?`;
-                calcText = `${formatNumber(percent)} ${selectedType.activeUnit}/100 ${selectedType.totalUnit} × ${total} ${selectedType.totalUnit} = ${formatNumber(correctAnswer)} ${selectedType.activeUnit}`;
-            } else if (questionDirection === 1) {
+                    `En infusionsvätska har styrkan ${formatNumber(percent)} % (vikt/volym). Vilken styrka motsvarar detta i mg/mL?`;
+                calcText =
+                    `${formatNumber(percent)} % = ${formatNumber(percent)} g/100 mL<br>` +
+                    `${formatNumber(percent)} g × 1000 mg/g = ${formatNumber(percent * 1000)} mg<br>` +
+                    `${formatNumber(percent * 1000)} mg ÷ 100 mL = ${formatNumber(correctAnswer)} mg/mL`;
+            } else if (questionType === 1) {
+                const strengthMgMl = percent * 10;
                 correctAnswer = percent;
-                answerUnit = `% (${selectedType.code})`;
+                answerUnit = "% (vikt/volym)";
                 document.getElementById("problem").textContent =
-                    `En ${selectedType.product} innehåller ${formatNumber(activeAmount)} ${selectedType.activeUnit} ${selectedType.activeName} i totalt ${total} ${selectedType.totalUnit}. Vilken är styrkan i procent (${selectedType.code})?`;
-                calcText = `${formatNumber(activeAmount)} ${selectedType.activeUnit} ÷ ${total} ${selectedType.totalUnit} × 100 = ${formatNumber(correctAnswer)} % (${selectedType.code})`;
+                    `En infusionsvätska har styrkan ${formatNumber(strengthMgMl)} mg/mL. Vilken styrka motsvarar detta i vikt/volymprocent?`;
+                calcText =
+                    `${formatNumber(strengthMgMl)} mg/mL × 100 mL = ${formatNumber(strengthMgMl * 100)} mg/100 mL<br>` +
+                    `${formatNumber(strengthMgMl * 100)} mg ÷ 1000 mg/g = ${formatNumber(percent)} g/100 mL<br>` +
+                    `${formatNumber(percent)} g/100 mL = ${formatNumber(correctAnswer)} %`;
+            } else if (questionType === 2) {
+                const volumeMl = pick(smallVolumesMl);
+                const strengthMgMl = percent * 10;
+                correctAnswer = strengthMgMl * volumeMl;
+                answerUnit = "mg";
+                document.getElementById("problem").textContent =
+                    `En patient ordineras ${volumeMl} mL av en ${formatNumber(percent)}-procentig läkemedelslösning (vikt/volym). Hur stor dos i mg motsvarar detta?`;
+                calcText =
+                    `${formatNumber(percent)} % = ${formatNumber(percent)} g/100 mL = ${formatNumber(strengthMgMl)} mg/mL<br>` +
+                    `${formatNumber(strengthMgMl)} mg/mL × ${volumeMl} mL = ${formatNumber(correctAnswer)} mg`;
+            } else if (questionType === 3) {
+                const volumeMl = pick(largeVolumesMl);
+                correctAnswer = (percent * volumeMl) / 100;
+                answerUnit = "g";
+                document.getElementById("problem").textContent =
+                    `En patient har fått ${volumeMl} mL av en ${formatNumber(percent)}-procentig infusionslösning (vikt/volym). Hur stor dos i gram har administrerats?`;
+                calcText =
+                    `${formatNumber(percent)} % = ${formatNumber(percent)} g/100 mL<br>` +
+                    `${volumeMl} mL × ${formatNumber(percent)} g/100 mL = ${formatNumber(correctAnswer)} g`;
+            } else if (questionType === 4) {
+                const totalWeightG = pick(ointmentWeightsG);
+                const activeAmountG = (percent * totalWeightG) / 100;
+                correctAnswer = activeAmountG * 1000;
+                answerUnit = "mg";
+                document.getElementById("problem").textContent =
+                    `En tub innehåller ${totalWeightG} g salva med styrkan ${formatNumber(percent)} % (vikt/vikt). Hur många mg verksam substans finns i hela tuben?`;
+                calcText =
+                    `${formatNumber(percent)} % = ${formatNumber(percent)} g/100 g salva<br>` +
+                    `${totalWeightG} g salva × ${formatNumber(percent)} g/100 g = ${formatNumber(activeAmountG)} g<br>` +
+                    `${formatNumber(activeAmountG)} g × 1000 mg/g = ${formatNumber(correctAnswer)} mg`;
+            } else if (questionType === 5) {
+                const totalVolumeMl = pick(volumePercentTotalsMl);
+                correctAnswer = (percent * totalVolumeMl) / 100;
+                answerUnit = "mL";
+                document.getElementById("problem").textContent =
+                    `En lösning ska beredas till totalt ${totalVolumeMl} mL med styrkan ${formatNumber(percent)} % (volym/volym). Hur många mL av den verksamma vätskan behövs?`;
+                calcText =
+                    `${formatNumber(percent)} % = ${formatNumber(percent)} mL/100 mL<br>` +
+                    `${totalVolumeMl} mL × ${formatNumber(percent)} mL/100 mL = ${formatNumber(correctAnswer)} mL`;
             } else {
-                correctAnswer = total;
-                answerUnit = selectedType.totalUnit;
+                const totalWeightG = pick(ointmentWeightsG);
+                const activeAmountG = (percent * totalWeightG) / 100;
+                correctAnswer = percent;
+                answerUnit = "% (vikt/vikt)";
                 document.getElementById("problem").textContent =
-                    `Du har ${formatNumber(activeAmount)} ${selectedType.activeUnit} ${selectedType.activeName} och ska bereda en ${selectedType.product} med styrkan ${formatNumber(percent)} % (${selectedType.code}). Hur stor total mängd i ${selectedType.totalUnit} kan beredas?`;
-                calcText = `${formatNumber(activeAmount)} ${selectedType.activeUnit} × 100 ${selectedType.totalUnit} ÷ ${formatNumber(percent)} ${selectedType.activeUnit} = ${formatNumber(correctAnswer)} ${selectedType.totalUnit}`;
+                    `En salva innehåller ${formatNumber(activeAmountG)} g verksam substans i totalt ${totalWeightG} g salva. Vilken är salvans styrka i vikt/viktprocent?`;
+                calcText =
+                    `${formatNumber(activeAmountG)} g ÷ ${totalWeightG} g × 100 = ${formatNumber(correctAnswer)} %`;
             }
 
             document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit}:`;
@@ -105,7 +152,7 @@
                 document.getElementById("result").style.color = "#a33";
             }
 
-            document.getElementById("calculation").textContent = `Beräkning: ${calcText}`;
+            document.getElementById("calculation").innerHTML = `<strong>Beräkning:</strong><br>${calcText}`;
         }
 
         document.getElementById("answer").addEventListener("keydown", event => {
