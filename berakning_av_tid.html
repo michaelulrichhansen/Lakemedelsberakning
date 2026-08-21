@@ -21,69 +21,93 @@
         <button onclick="generateProblem()">Slumpa värden</button>
         <br><br>
         <label id="answerLabel" for="answer"></label>
-        <input type="text" id="answer" placeholder="">
+        <input type="text" id="answer" placeholder="Ditt svar">
         <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result"></p>
         <p id="calculation"></p>
     </div>
     <script>
-        let value, fromUnit, toUnit, correctAnswer, calcText, decimals;
+        const decimalHours = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 3, 4, 6, 8, 12];
+        const wholeHours = [1, 2, 3, 4, 5, 6, 8, 10, 12];
+        const extraMinutes = [15, 30, 45];
+
+        let correctAnswer, answerUnit, calcText;
+
+        const pick = values => values[Math.floor(Math.random() * values.length)];
+
+        function formatNumber(value) {
+            return Number(value.toFixed(2)).toString().replace(".", ",");
+        }
 
         function generateProblem() {
-            if (Math.random() > 0.5) {
-                // timmar till minuter
-                fromUnit = "timmar";
-                toUnit = "minuter";
-                value = Math.floor(Math.random() * 10) + 1; // 1-10 timmar
-                correctAnswer = value * 60;
-                calcText = `${value} timmar × 60 = ${correctAnswer} minuter`;
-                decimals = 0;
-                document.getElementById("answerLabel").textContent = "Ange ditt svar (heltal):";
-                document.getElementById("answer").placeholder = "Heltal";
+            const caseType = Math.floor(Math.random() * 4);
+
+            if (caseType === 0) {
+                const hours = pick(decimalHours);
+                correctAnswer = hours * 60;
+                answerUnit = "minuter";
+                calcText = `${formatNumber(hours)} timmar × 60 = ${correctAnswer} minuter`;
+                document.getElementById("problem").textContent =
+                    `En infusion ska pågå i ${formatNumber(hours)} timmar. Hur många minuter motsvarar detta?`;
+            } else if (caseType === 1) {
+                const hours = pick(decimalHours);
+                const minutes = hours * 60;
+                correctAnswer = hours;
+                answerUnit = "timmar";
+                calcText = `${minutes} minuter ÷ 60 = ${formatNumber(correctAnswer)} timmar`;
+                document.getElementById("problem").textContent =
+                    `En infusion ska pågå i ${minutes} minuter. Hur många timmar motsvarar detta uttryckt som decimaltal?`;
+            } else if (caseType === 2) {
+                const hours = pick(wholeHours);
+                const minutes = pick(extraMinutes);
+                correctAnswer = hours * 60 + minutes;
+                answerUnit = "minuter";
+                calcText = `${hours} timmar × 60 + ${minutes} minuter = ${correctAnswer} minuter`;
+                document.getElementById("problem").textContent =
+                    `En behandling ska pågå i ${hours} timmar och ${minutes} minuter. Hur många minuter är det sammanlagt?`;
             } else {
-                // minuter till timmar
-                fromUnit = "minuter";
-                toUnit = "timmar";
-                value = Math.floor(Math.random() * 951) + 10; // 10-960 minuter
-                correctAnswer = (value / 60).toFixed(2);
-                calcText = `${value} minuter ÷ 60 = ${correctAnswer} timmar`;
-                decimals = 2;
-                document.getElementById("answerLabel").textContent = "Ange ditt svar (två decimaler):";
-                document.getElementById("answer").placeholder = "Ex: 2.50";
+                const hours = pick(wholeHours);
+                const minutes = pick(extraMinutes);
+                const totalMinutes = hours * 60 + minutes;
+                correctAnswer = minutes;
+                answerUnit = "minuter";
+                calcText = `${totalMinutes} minuter − (${hours} × 60 minuter) = ${correctAnswer} minuter`;
+                document.getElementById("problem").textContent =
+                    `${totalMinutes} minuter motsvarar ${hours} hela timmar och hur många minuter?`;
             }
-            document.getElementById("problem").textContent = `Hur mycket är ${value} ${fromUnit} uttryckt i ${toUnit}?`;
-            document.getElementById("result").textContent = '';
-            document.getElementById("calculation").textContent = '';
-            document.getElementById("answer").value = '';
+
+            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit}:`;
+            document.getElementById("answer").value = "";
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").textContent = "";
         }
 
         function checkAnswer() {
-            let user = document.getElementById("answer").value.replace(",", ".").trim();
-            let userAnswer;
-            if (decimals === 0) {
-                userAnswer = parseInt(user, 10);
-            } else {
-                userAnswer = Number(parseFloat(user).toFixed(2));
+            const rawAnswer = document.getElementById("answer").value.trim().replace(",", ".");
+            const userAnswer = Number(rawAnswer);
+
+            if (rawAnswer === "" || !Number.isFinite(userAnswer)) {
+                document.getElementById("result").textContent = "Skriv ett giltigt tal.";
+                document.getElementById("result").style.color = "#a33";
+                document.getElementById("calculation").textContent = "";
+                return;
             }
 
-            let isCorrect;
-            if (decimals === 0) {
-                isCorrect = (userAnswer === correctAnswer);
-            } else {
-                isCorrect = (userAnswer === Number(correctAnswer));
-            }
-
-            if (isCorrect) {
+            if (Math.abs(userAnswer - correctAnswer) < 0.001) {
                 document.getElementById("result").textContent = "Rätt svar!";
                 document.getElementById("result").style.color = "#195";
             } else {
-                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${correctAnswer}.`;
+                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${formatNumber(correctAnswer)} ${answerUnit}.`;
                 document.getElementById("result").style.color = "#a33";
             }
+
             document.getElementById("calculation").textContent = `Beräkning: ${calcText}`;
         }
 
-        // Skapa ett första problem när sidan laddas
+        document.getElementById("answer").addEventListener("keydown", event => {
+            if (event.key === "Enter") checkAnswer();
+        });
+
         window.onload = generateProblem;
     </script>
 </body>
