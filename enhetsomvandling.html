@@ -8,7 +8,7 @@
     h1 { color: #195; }
     .card { background: #fff; padding: 32px; max-width: 450px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
     label, input, button { font-size: 1rem; margin-top: 12px; }
-    input[type="number"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+    input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
     button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
     #response { font-weight: bold; margin-top: 16px;}
     #conversionSteps { color: #555; background: #f2f2f2; padding: 10px; border-radius: 8px; }
@@ -19,71 +19,84 @@
     <h1>Läkemedelsberäkning<br>Enhetsomvandling</h1>
     <p id="question"></p>
     <button onclick="generateValues()">Slumpa värden</button>
-    <input type="hidden" id="value">
-    <input type="hidden" id="fromUnit">
-    <input type="hidden" id="toUnit">
     <br><br>
-    <label for="userAnswer">Ange ditt svar:</label>
-    <input type="number" id="userAnswer" placeholder="Skriv svaret">
+    <label id="answerLabel" for="userAnswer">Ange ditt svar:</label>
+    <input type="text" id="userAnswer" placeholder="Ditt svar">
     <button onclick="checkAnswer()">Kontrollera svar</button>
     <p id="response"></p>
     <pre id="conversionSteps" style="display: none;"></pre>
   </div>
   <script>
-    const units = {
-      'g': { 'mg': 1000, 'ug': 1000000 },
-      'mg': { 'g': 1/1000, 'ug': 1000 },
-      'ug': { 'mg': 1/1000, 'g': 1/1000000 },
-      'L': { 'mL': 1000, 'uL': 1000000 },
-      'mL': { 'L': 1/1000, 'uL': 1000 },
-      'uL': { 'mL': 1/1000, 'L': 1/1000000 },
-      'mol': { 'mmol': 1000, 'umol': 1000000 },
-      'mmol': { 'mol': 1/1000, 'umol': 1000 },
-      'umol': { 'mmol': 1/1000, 'mol': 1/1000000 }
-    };
+    const multiplyValues = [0.001, 0.002, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 1.5, 2, 2.5, 5, 10];
+    const divideValues = [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 1500, 2000, 2500, 5000];
+    const conversions = [
+      { from: "g", to: "mg", factor: 1000 },
+      { from: "mg", to: "g", factor: 0.001 },
+      { from: "mg", to: "µg", factor: 1000 },
+      { from: "µg", to: "mg", factor: 0.001 },
+      { from: "L", to: "mL", factor: 1000 },
+      { from: "mL", to: "L", factor: 0.001 },
+      { from: "mL", to: "µL", factor: 1000 },
+      { from: "µL", to: "mL", factor: 0.001 },
+      { from: "mol", to: "mmol", factor: 1000 },
+      { from: "mmol", to: "mol", factor: 0.001 },
+      { from: "mmol", to: "µmol", factor: 1000 },
+      { from: "µmol", to: "mmol", factor: 0.001 }
+    ];
+
+    let currentValue, currentConversion, correctAnswer, calculation;
+
+    const pick = values => values[Math.floor(Math.random() * values.length)];
+
+    function formatNumber(value) {
+      return Number(value.toFixed(3)).toString().replace(".", ",");
+    }
 
     function generateValues() {
-      const unitKeys = Object.keys(units);
-      const fromUnit = unitKeys[Math.floor(Math.random() * unitKeys.length)];
-      const toUnits = Object.keys(units[fromUnit]);
-      const toUnit = toUnits[Math.floor(Math.random() * toUnits.length)];
-      const value = (Math.random() * 1000).toFixed(3);
-      document.getElementById('question').textContent = `Om du har ${value} ${fromUnit}, hur mycket är det i ${toUnit}?`;
-      document.getElementById('userAnswer').setAttribute('placeholder', 'Ange ditt svar i ' + toUnit);
-      document.getElementById('value').value = value;
-      document.getElementById('fromUnit').value = fromUnit;
-      document.getElementById('toUnit').value = toUnit;
-      document.getElementById('response').textContent = '';
-      document.getElementById('conversionSteps').style.display = 'none';
-      document.getElementById('userAnswer').value = '';
+      currentConversion = pick(conversions);
+      currentValue = pick(currentConversion.factor > 1 ? multiplyValues : divideValues);
+      correctAnswer = currentValue * currentConversion.factor;
+
+      document.getElementById("question").textContent =
+        `Om du har ${formatNumber(currentValue)} ${currentConversion.from}, hur mycket är det i ${currentConversion.to}?`;
+      document.getElementById("answerLabel").textContent = `Ange ditt svar i ${currentConversion.to}:`;
+      document.getElementById("userAnswer").placeholder = `Svar i ${currentConversion.to}`;
+
+      if (currentConversion.factor > 1) {
+        calculation = `${formatNumber(currentValue)} ${currentConversion.from} × 1000 ${currentConversion.to}/${currentConversion.from} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
+      } else {
+        calculation = `${formatNumber(currentValue)} ${currentConversion.from} ÷ 1000 ${currentConversion.from}/${currentConversion.to} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
+      }
+
+      document.getElementById("response").textContent = "";
+      document.getElementById("conversionSteps").style.display = "none";
+      document.getElementById("userAnswer").value = "";
     }
 
     function checkAnswer() {
-      const value = parseFloat(document.getElementById('value').value);
-      const fromUnit = document.getElementById('fromUnit').value;
-      const toUnit = document.getElementById('toUnit').value;
-      const conversionFactor = units[fromUnit][toUnit];
-      const result = (value * conversionFactor).toFixed(6);
-      const userInput = document.getElementById('userAnswer').value.replace(',', '.');
-      const userAnswer = parseFloat(userInput).toFixed(6);
-      const correct = userAnswer === result;
-      const responseText = correct ? 'Rätt svar!' : `Fel svar. Det rätta svaret är ${result} ${toUnit}.`;
+      const rawAnswer = document.getElementById("userAnswer").value.trim().replace(",", ".");
+      const userAnswer = Number(rawAnswer);
 
-      document.getElementById('response').textContent = responseText;
-      document.getElementById('response').style.color = correct ? "#195" : "#a33";
-
-      let calculation;
-      if (conversionFactor > 1) {
-        calculation = `${value} ${fromUnit} × ${conversionFactor} ${toUnit}/${fromUnit} = ${result} ${toUnit}`;
-      } else {
-        calculation = `${value} ${fromUnit} ÷ ${1/conversionFactor} ${fromUnit}/${toUnit} = ${result} ${toUnit}`;
+      if (rawAnswer === "" || !Number.isFinite(userAnswer)) {
+        document.getElementById("response").textContent = "Skriv ett giltigt tal.";
+        document.getElementById("response").style.color = "#a33";
+        document.getElementById("conversionSteps").style.display = "none";
+        return;
       }
 
-      document.getElementById('conversionSteps').textContent = "Beräkning: " + calculation;
-      document.getElementById('conversionSteps').style.display = 'block';
+      const isCorrect = Math.abs(userAnswer - correctAnswer) < 0.0005;
+      document.getElementById("response").textContent = isCorrect
+        ? "Rätt svar!"
+        : `Fel svar. Det rätta svaret är ${formatNumber(correctAnswer)} ${currentConversion.to}.`;
+      document.getElementById("response").style.color = isCorrect ? "#195" : "#a33";
+      document.getElementById("conversionSteps").textContent = `Beräkning: ${calculation}`;
+      document.getElementById("conversionSteps").style.display = "block";
     }
 
-    // Slumpa ett första värde när sidan laddas
+    document.getElementById("userAnswer").addEventListener("keydown", event => {
+      if (event.key === "Enter") checkAnswer();
+    });
+
     window.onload = generateValues;
   </script>
 </body>
