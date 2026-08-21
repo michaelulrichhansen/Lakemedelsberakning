@@ -3,161 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Läkemedelsberäkning med avrundningsregler</title>
-
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background: #f7f7f7;
-        }
-
-        h1 {
-            color: #195;
-        }
-
-        .card {
-            background: #fff;
-            padding: 32px;
-            max-width: 400px;
-            margin: auto;
-            border-radius: 16px;
-            box-shadow: 0 6px 24px #0001;
-        }
-
-        label,
-        input,
-        button {
-            font-size: 1rem;
-            margin-top: 12px;
-        }
-
-        input[type="text"] {
-            width: 140px;
-            padding: 4px 10px;
-            border-radius: 6px;
-            border: 1px solid #aaa;
-        }
-
-        button {
-            border-radius: 6px;
-            padding: 8px 16px;
-            border: none;
-            background: #3b7;
-            color: #fff;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #296;
-        }
-
-        #result {
-            font-weight: bold;
-            margin-top: 16px;
-        }
-
-        #calculation {
-            color: #555;
-        }
-
-        .flex-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7; }
+        h1 { color: #195; }
+        .card { background: #fff; padding: 32px; max-width: 400px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001; }
+        label, input, button { font-size: 1rem; margin-top: 12px; }
+        input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa; }
+        button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
+        button:hover { background: #296; }
+        #result { font-weight: bold; margin-top: 16px; }
+        #calculation { color: #555; }
+        .flex-row { display: flex; align-items: center; gap: 8px; }
     </style>
 </head>
-
 <body>
     <div class="card">
-        <h1>
-            Läkemedelsberäkning<br>
-            Avrundningsregler
-        </h1>
-
+        <h1>Läkemedelsberäkning<br>Avrundningsregler</h1>
         <p>
             Slumpa ett värde på X och svara utifrån instruktionen
             för hur svaret ska avrundas.
             <br>
             Skriv ditt avrundade svar i rutan och kontrollera!
         </p>
-
-        <button type="button" onclick="slumpaVarde()">
-            Slumpa värde
-        </button>
-
+        <button type="button" onclick="slumpaVarde()">Slumpa värden</button>
         <br><br>
-
         <div id="problem" class="flex-row">
-            <span id="x">
-                Tryck på ”Slumpa värde” för att börja.
-            </span>
+            <span id="x"></span>
         </div>
-
         <br>
-
         <p id="avrundningsinstruktion" style="font-weight: bold;"></p>
-
         <label for="studentAnswer">Ange ditt svar:</label>
-
-        <input
-            type="text"
-            id="studentAnswer"
-            inputmode="decimal"
-            autocomplete="off"
-            placeholder="Ditt svar"
-        >
-
-        <button type="button" onclick="checkAnswer()">
-            Kontrollera svar
-        </button>
-
+        <input type="text" id="studentAnswer" inputmode="decimal" autocomplete="off" placeholder="Ditt svar">
+        <button type="button" onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result"></p>
         <p id="calculation"></p>
     </div>
 
     <script>
-        /*
-         * Talet lagras som ett heltal med fyra underförstådda decimaler.
-         *
-         * Exempel:
-         * 12345 motsvarar 1,2345.
-         *
-         * På detta sätt undviker vi JavaScripts problem med
-         * avrundning av binära decimaltal.
-         */
-
         let currentScaledValue = null;
         let currentDecimals = null;
 
         const avrundningar = [
-            {
-                decimaler: 0,
-                instruktion: "Runda av till heltal"
-            },
-            {
-                decimaler: 1,
-                instruktion: "Runda av till en decimal"
-            },
-            {
-                decimaler: 2,
-                instruktion: "Runda av till två decimaler"
-            },
-            {
-                decimaler: 3,
-                instruktion: "Runda av till tre decimaler"
-            }
+            { decimaler: 0, instruktion: "Runda av till heltal" },
+            { decimaler: 1, instruktion: "Runda av till en decimal" },
+            { decimaler: 2, instruktion: "Runda av till två decimaler" },
+            { decimaler: 3, instruktion: "Runda av till tre decimaler" }
         ];
 
-        /*
-         * Gör om ett heltal till ett tal med ett bestämt
-         * antal decimaler.
-         *
-         * Exempel:
-         * formatScaledNumber(12345, 4) ger "1,2345".
-         */
         function formatScaledNumber(value, decimals) {
             const isNegative = value < 0;
             const absoluteValue = Math.abs(value);
@@ -170,49 +63,19 @@
             const paddedDigits = digits.padStart(decimals + 1, "0");
             const integerPart = paddedDigits.slice(0, -decimals);
             const decimalPart = paddedDigits.slice(-decimals);
-
-            return (
-                (isNegative ? "-" : "") +
-                integerPart +
-                "," +
-                decimalPart
-            );
+            return (isNegative ? "-" : "") + integerPart + "," + decimalPart;
         }
 
-        /*
-         * Avrundar ett tal som är lagrat med fyra decimaler.
-         *
-         * Funktionen använder endast heltalsberäkning.
-         * Därför avrundas exempelvis 1,2345 korrekt till 1,235.
-         */
         function roundScaledValue(value, decimals) {
-            const originalDecimals = 4;
-            const divisor = 10 ** (originalDecimals - decimals);
-
+            const divisor = 10 ** (4 - decimals);
             return Math.floor((value + divisor / 2) / divisor);
         }
 
-        /*
-         * Normaliserar studentens svar så att exempelvis:
-         *
-         * "2,50"
-         * "2.5"
-         * "02,500"
-         *
-         * kan jämföras som samma numeriska värde.
-         */
         function normalizeAnswer(answer) {
-            let normalized = answer
-                .trim()
-                .replace(/\s/g, "")
-                .replace(",", ".");
-
-            if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(normalized)) {
-                return null;
-            }
+            let normalized = answer.trim().replace(/\s/g, "").replace(",", ".");
+            if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(normalized)) return null;
 
             let sign = "";
-
             if (normalized.startsWith("-")) {
                 sign = "-";
                 normalized = normalized.slice(1);
@@ -221,145 +84,83 @@
             }
 
             let [integerPart, decimalPart = ""] = normalized.split(".");
-
             integerPart = integerPart.replace(/^0+(?=\d)/, "");
             decimalPart = decimalPart.replace(/0+$/, "");
+            if (integerPart === "") integerPart = "0";
 
-            if (integerPart === "") {
-                integerPart = "0";
-            }
-
-            let result = decimalPart
-                ? integerPart + "." + decimalPart
-                : integerPart;
-
-            if (result === "0") {
-                sign = "";
-            }
-
+            const result = decimalPart ? integerPart + "." + decimalPart : integerPart;
+            if (result === "0") sign = "";
             return sign + result;
         }
 
+        function roundingName(decimals) {
+            if (decimals === 0) return "närmaste heltal";
+            if (decimals === 1) return "en decimal";
+            if (decimals === 2) return "två decimaler";
+            return "tre decimaler";
+        }
+
+        function decidingDigit(value, decimals) {
+            const digits = Math.abs(value).toString().padStart(5, "0");
+            const decimalDigits = digits.slice(-4);
+            return Number(decimalDigits.charAt(decimals));
+        }
+
         function slumpaVarde() {
-            /*
-             * Slumpar ett värde från 0,0000 till 10,0000.
-             * Värdet är ett heltal mellan 0 och 100000.
-             */
             currentScaledValue = Math.floor(Math.random() * 100001);
-
-            const randomIndex = Math.floor(
-                Math.random() * avrundningar.length
-            );
-
-            const selectedRounding = avrundningar[randomIndex];
-
+            const selectedRounding = avrundningar[Math.floor(Math.random() * avrundningar.length)];
             currentDecimals = selectedRounding.decimaler;
 
             document.getElementById("x").textContent =
                 "X = " + formatScaledNumber(currentScaledValue, 4);
-
-            document.getElementById(
-                "avrundningsinstruktion"
-            ).textContent = selectedRounding.instruktion;
-
+            document.getElementById("avrundningsinstruktion").textContent =
+                selectedRounding.instruktion;
             document.getElementById("studentAnswer").value = "";
             document.getElementById("result").textContent = "";
             document.getElementById("calculation").textContent = "";
-
             document.getElementById("studentAnswer").focus();
         }
 
         function checkAnswer() {
-            if (
-                currentScaledValue === null ||
-                currentDecimals === null
-            ) {
-                return;
-            }
-
-            const studentAnswer =
-                document.getElementById("studentAnswer").value;
-
-            const normalizedStudentAnswer =
-                normalizeAnswer(studentAnswer);
-
+            const studentAnswer = document.getElementById("studentAnswer").value;
+            const normalizedStudentAnswer = normalizeAnswer(studentAnswer);
             const resultElement = document.getElementById("result");
-            const calculationElement =
-                document.getElementById("calculation");
+            const calculationElement = document.getElementById("calculation");
 
             if (normalizedStudentAnswer === null) {
-                resultElement.textContent =
-                    "Skriv ett giltigt tal. Du kan använda komma eller punkt.";
-
+                resultElement.textContent = "Skriv ett giltigt tal. Du kan använda komma eller punkt.";
                 resultElement.style.color = "#a33";
                 calculationElement.textContent = "";
-
                 return;
             }
 
-            const roundedValue = roundScaledValue(
-                currentScaledValue,
-                currentDecimals
-            );
-
-            const correctAnswer = formatScaledNumber(
-                roundedValue,
-                currentDecimals
-            );
-
-            const normalizedCorrectAnswer =
-                normalizeAnswer(correctAnswer);
-
-            const originalValue = formatScaledNumber(
-                currentScaledValue,
-                4
-            );
-
-            const isCorrect =
-                normalizedStudentAnswer === normalizedCorrectAnswer;
+            const roundedValue = roundScaledValue(currentScaledValue, currentDecimals);
+            const correctAnswer = formatScaledNumber(roundedValue, currentDecimals);
+            const normalizedCorrectAnswer = normalizeAnswer(correctAnswer);
+            const originalValue = formatScaledNumber(currentScaledValue, 4);
+            const nextDigit = decidingDigit(currentScaledValue, currentDecimals);
+            const isCorrect = normalizedStudentAnswer === normalizedCorrectAnswer;
 
             if (isCorrect) {
                 resultElement.textContent = "Rätt svar!";
                 resultElement.style.color = "#195";
             } else {
-                resultElement.textContent =
-                    "Fel svar. Rätt svar är " + correctAnswer + ".";
-
+                resultElement.textContent = "Fel svar. Rätt svar är " + correctAnswer + ".";
                 resultElement.style.color = "#a33";
             }
 
-            let roundingText;
-
-            if (currentDecimals === 0) {
-                roundingText = "närmaste heltal";
-            } else if (currentDecimals === 1) {
-                roundingText = "en decimal";
-            } else if (currentDecimals === 2) {
-                roundingText = "två decimaler";
-            } else {
-                roundingText = "tre decimaler";
-            }
+            const ruleExplanation = nextDigit >= 5
+                ? `Nästa siffra är ${nextDigit}. Den är 5 eller större, så föregående siffra höjs.`
+                : `Nästa siffra är ${nextDigit}. Den är mindre än 5, så föregående siffra behålls.`;
 
             calculationElement.textContent =
-                "Beräkning: Runda av " +
-                originalValue +
-                " till " +
-                roundingText +
-                " = " +
-                correctAnswer;
+                `Beräkning: ${originalValue} ska avrundas till ${roundingName(currentDecimals)}. ` +
+                `${ruleExplanation} Svaret blir ${correctAnswer}.`;
         }
 
-        /*
-         * Studenten kan även kontrollera svaret genom
-         * att trycka på Enter.
-         */
-        document
-            .getElementById("studentAnswer")
-            .addEventListener("keydown", function (event) {
-                if (event.key === "Enter") {
-                    checkAnswer();
-                }
-            });
+        document.getElementById("studentAnswer").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") checkAnswer();
+        });
 
         window.onload = slumpaVarde;
     </script>
