@@ -2,79 +2,130 @@
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Läkemedelsberäkning – Injektionshastighet</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7;}
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7; }
         h1 { color: #195; }
-        .card { background: #fff; padding: 32px; max-width: 520px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
+        .card { background: #fff; padding: 32px; max-width: 520px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001; }
         label, input, button { font-size: 1rem; margin-top: 12px; }
-        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        input[type="number"], input[type="text"] { width: 140px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa; }
         button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
-        #result { font-weight: bold; margin-top: 16px;}
-        #calculation { color: #555; }
+        button:hover { background: #2a6; }
+        #problem { line-height: 1.55; }
+        #result { font-weight: bold; margin-top: 16px; }
+        #calculation { color: #555; line-height: 1.55; }
+        .unit { margin-left: 6px; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>Läkemedelsberäkning<br>Injektionshastighet</h1>
         <p id="problem"></p>
-        <button onclick="randomizeCase()">Slumpa värden</button>
+        <button type="button" onclick="randomizeCase()">Slumpa ny uppgift</button>
         <br><br>
-        <label id="answerLabel" for="answer"></label>
-        <input type="text" id="answer" placeholder="">
-        <button onclick="checkAnswer()">Kontrollera svar</button>
-        <p id="result"></p>
+        <label id="answerLabel" for="answer"></label><br>
+        <input type="text" id="answer" inputmode="decimal" autocomplete="off">
+        <span class="unit" id="answerUnit"></span>
+        <button type="button" onclick="checkAnswer()">Kontrollera svar</button>
+        <p id="result" aria-live="polite"></p>
         <p id="calculation"></p>
-        <p style="font-size:0.95em;color:#444;">Avrunda svaret till två decimaler. Punkt som decimaltecken.</p>
+        <p style="font-size:0.95em;color:#444;">Avrunda svaret till två decimaler vid behov. Både punkt och komma accepteras som decimaltecken.</p>
     </div>
+
     <script>
-        let mgPerMl, rateValue, direction, correctAnswer, calcText;
+        const ratesMgMin = [0.2, 0.25, 0.4, 0.5, 0.6, 0.75, 0.8, 1, 1.2, 1.5, 2];
+        const strengthsMgMl = [2.5, 5, 10, 20, 25, 50];
+        const timesMin = [5, 10, 15, 20, 25, 30];
+        const ratesMlMin = [0.02, 0.04, 0.05, 0.08, 0.1, 0.12, 0.15, 0.2, 0.25, 0.3];
+
+        let correctAnswer = 0;
+        let calcText = "";
+        let answerUnit = "";
+
+        const pick = values => values[Math.floor(Math.random() * values.length)];
+
+        function formatNumber(value, maxDecimals = 2) {
+            return Number(value.toFixed(maxDecimals)).toString().replace(".", ",");
+        }
 
         function randomizeCase() {
-            mgPerMl = [5, 10, 25, 50][Math.floor(Math.random() * 4)]; // styrka
-            if (Math.random() > 0.5) {
-                // Från mg/min till mL/min
-                direction = "mg2ml";
-                rateValue = Math.floor(Math.random() * 76) + 5; // 5-80 mg/min
-                correctAnswer = (rateValue / mgPerMl).toFixed(2);
-                calcText = `${rateValue} mg/min ÷ ${mgPerMl} mg/mL = ${correctAnswer} mL/min`;
-                document.getElementById("problem").textContent =
-                    `En patient ska ha ${rateValue} mg läkemedel per minut. Läkemedlets styrka är ${mgPerMl} mg/mL. Hur många mL/min motsvarar detta?`;
-                document.getElementById("answerLabel").textContent = "Ange antal mL/min (två decimaler):";
-                document.getElementById("answer").placeholder = "t.ex. 0.80";
+            const type = Math.floor(Math.random() * 4);
+            const strength = pick(strengthsMgMl);
+            let problemText = "";
+
+            if (type === 0) {
+                // mg/min + mg/mL + tid -> total mL
+                const rate = pick(ratesMgMin);
+                const time = pick(timesMin);
+                const volumePerMinute = rate / strength;
+                correctAnswer = volumePerMinute * time;
+                answerUnit = "mL";
+                problemText = `En patient ska få ett läkemedel med injektionshastigheten <strong>${formatNumber(rate)} mg/minut</strong>. Läkemedlet har styrkan <strong>${formatNumber(strength)} mg/mL</strong>. Efter <strong>${time} minuter</strong>, hur många <strong>mL</strong> har patienten fått?`;
+                calcText = `${formatNumber(rate)} mg/min ÷ ${formatNumber(strength)} mg/mL = ${formatNumber(volumePerMinute, 4)} mL/min<br>${formatNumber(volumePerMinute, 4)} mL/min × ${time} min = <strong>${formatNumber(correctAnswer)} mL</strong>`;
+            } else if (type === 1) {
+                // mg/min + mg/mL -> mL/min
+                const rate = pick(ratesMgMin);
+                correctAnswer = rate / strength;
+                answerUnit = "mL/min";
+                problemText = `Ett läkemedel ska ges med hastigheten <strong>${formatNumber(rate)} mg/minut</strong>. Lösningens styrka är <strong>${formatNumber(strength)} mg/mL</strong>. Vilken injektionshastighet motsvarar detta i <strong>mL/minut</strong>?`;
+                calcText = `${formatNumber(rate)} mg/min ÷ ${formatNumber(strength)} mg/mL = <strong>${formatNumber(correctAnswer)} mL/min</strong>`;
+            } else if (type === 2) {
+                // mL/min + mg/mL -> mg/min
+                const volumeRate = pick(ratesMlMin);
+                correctAnswer = volumeRate * strength;
+                answerUnit = "mg/min";
+                problemText = `En patient får <strong>${formatNumber(volumeRate)} mL/minut</strong> av ett läkemedel med styrkan <strong>${formatNumber(strength)} mg/mL</strong>. Hur många <strong>mg/minut</strong> får patienten?`;
+                calcText = `${formatNumber(volumeRate)} mL/min × ${formatNumber(strength)} mg/mL = <strong>${formatNumber(correctAnswer)} mg/min</strong>`;
             } else {
-                // Från mL/min till mg/min
-                direction = "ml2mg";
-                rateValue = (Math.random() * 1.9 + 0.1).toFixed(2); // 0.10–2.00 mL/min
-                correctAnswer = (rateValue * mgPerMl).toFixed(2);
-                calcText = `${rateValue} mL/min × ${mgPerMl} mg/mL = ${correctAnswer} mg/min`;
-                document.getElementById("problem").textContent =
-                    `En patient får ${rateValue} mL läkemedel per minut. Läkemedlets styrka är ${mgPerMl} mg/mL. Hur många mg/min motsvarar detta?`;
-                document.getElementById("answerLabel").textContent = "Ange antal mg/min (två decimaler):";
-                document.getElementById("answer").placeholder = "t.ex. 40.00";
+                // mL/min + mg/mL + tid -> total mg
+                const volumeRate = pick(ratesMlMin);
+                const time = pick(timesMin);
+                const dosePerMinute = volumeRate * strength;
+                correctAnswer = dosePerMinute * time;
+                answerUnit = "mg";
+                problemText = `Ett läkemedel med styrkan <strong>${formatNumber(strength)} mg/mL</strong> ges med injektionshastigheten <strong>${formatNumber(volumeRate)} mL/minut</strong> under <strong>${time} minuter</strong>. Hur många <strong>mg</strong> läkemedel har patienten fått totalt?`;
+                calcText = `${formatNumber(volumeRate)} mL/min × ${formatNumber(strength)} mg/mL = ${formatNumber(dosePerMinute)} mg/min<br>${formatNumber(dosePerMinute)} mg/min × ${time} min = <strong>${formatNumber(correctAnswer)} mg</strong>`;
             }
-            document.getElementById("result").textContent = '';
-            document.getElementById("calculation").textContent = '';
-            document.getElementById("answer").value = '';
+
+            document.getElementById("problem").innerHTML = problemText;
+            document.getElementById("answerLabel").textContent = "Ditt svar:";
+            document.getElementById("answerUnit").textContent = answerUnit;
+            document.getElementById("answer").value = "";
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").innerHTML = "";
+            document.getElementById("answer").focus();
         }
 
         function checkAnswer() {
-            let userInput = document.getElementById("answer").value.replace(",", ".").trim();
-            let userAnswer = Number(parseFloat(userInput).toFixed(2));
-            let isCorrect = (userAnswer === Number(correctAnswer));
+            const rawAnswer = document.getElementById("answer").value.trim().replace(",", ".");
+            const userAnswer = Number(rawAnswer);
+            const roundedCorrect = Math.round((correctAnswer + Number.EPSILON) * 100) / 100;
 
-            if (isCorrect) {
-                document.getElementById("result").textContent = "Rätt svar!";
+            if (rawAnswer === "" || !Number.isFinite(userAnswer)) {
+                document.getElementById("result").textContent = "Skriv ett giltigt tal.";
+                document.getElementById("result").style.color = "#b33";
+                document.getElementById("calculation").innerHTML = "";
+                return;
+            }
+
+            // Godkänn svaret avrundat till två decimaler, med liten tolerans.
+            if (Math.abs(userAnswer - roundedCorrect) < 0.005) {
+                document.getElementById("result").textContent = `Rätt! Svaret är ${formatNumber(roundedCorrect)} ${answerUnit}.`;
                 document.getElementById("result").style.color = "#195";
             } else {
-                document.getElementById("result").textContent = `Fel svar. Det rätta svaret är ${correctAnswer}.`;
-                document.getElementById("result").style.color = "#a33";
+                document.getElementById("result").textContent = `Inte riktigt. Rätt svar är ${formatNumber(roundedCorrect)} ${answerUnit}.`;
+                document.getElementById("result").style.color = "#b33";
             }
-            document.getElementById("calculation").textContent = `Beräkning: ${calcText}`;
+
+            document.getElementById("calculation").innerHTML = `<strong>Beräkning:</strong><br>${calcText}`;
         }
 
-        // Starta med en slumpad fråga direkt
-        window.onload = randomizeCase;
+        document.getElementById("answer").addEventListener("keydown", event => {
+            if (event.key === "Enter") checkAnswer();
+        });
+
+        randomizeCase();
     </script>
 </body>
 </html>
