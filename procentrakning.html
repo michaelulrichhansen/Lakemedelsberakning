@@ -25,77 +25,93 @@
             <b>1 mL/100 mL = 1 % (v/v)</b>
         </div>
         <p id="problem"></p>
-        <button onclick="randomizeCase()">Slumpa uppgift</button>
+        <button onclick="randomizeCase()">Slumpa värden</button>
         <br><br>
         <label id="answerLabel" for="answer"></label>
-        <input type="text" id="answer" placeholder="">
+        <input type="text" id="answer" placeholder="Ditt svar">
         <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result"></p>
         <p id="calculation"></p>
-        <p style="font-size:0.95em;color:#444;">Svara med en decimal. Använd punkt som decimaltecken.</p>
+        <p style="font-size:0.95em;color:#444;">Avrunda till två decimaler vid behov. Både punkt och komma accepteras.</p>
     </div>
     <script>
-        let caseType, value, total, percent, correctAnswer, calcText;
+        const percentages = [0.5, 1, 2, 2.5, 5, 10, 20];
+        const totals = [100, 200, 250, 500, 1000];
+        const percentageTypes = [
+            { code: "w/v", activeUnit: "g", totalUnit: "mL", product: "lösning", activeName: "läkemedel" },
+            { code: "w/w", activeUnit: "g", totalUnit: "g", product: "salva", activeName: "aktiv substans" },
+            { code: "v/v", activeUnit: "mL", totalUnit: "mL", product: "lösning", activeName: "substans" }
+        ];
+
+        let percent, total, activeAmount, selectedType, questionDirection;
+        let correctAnswer, answerUnit, calcText;
+
+        const pick = values => values[Math.floor(Math.random() * values.length)];
+
+        function formatNumber(value) {
+            return Number(value.toFixed(2)).toString().replace(".", ",");
+        }
 
         function randomizeCase() {
-            // 0 = vikt/volym (% w/v), 1 = vikt/vikt (% w/w), 2 = volym/volym (% v/v)
-            caseType = Math.floor(Math.random() * 3);
+            percent = pick(percentages);
+            total = pick(totals);
+            activeAmount = (percent * total) / 100;
+            selectedType = pick(percentageTypes);
+            questionDirection = Math.floor(Math.random() * 3);
 
-            if (caseType === 0) {
-                // Vikt/volym-procent: Hur många gram i X mL för Y %?
-                total = [100, 250, 500, 1000][Math.floor(Math.random() * 4)];
-                percent = (Math.floor(Math.random() * 19) + 1) / 10; // 0.1–2.0 %
-                correctAnswer = ((percent * total) / 100).toFixed(1);
-                calcText = `${percent} % = ${percent} g/100 mL ⇒ (${percent} g × ${total}/100) = ${correctAnswer} g`;
+            if (questionDirection === 0) {
+                correctAnswer = activeAmount;
+                answerUnit = selectedType.activeUnit;
                 document.getElementById("problem").textContent =
-                    `Hur många gram läkemedel behövs för att blanda ${total} mL av en lösning med styrkan ${percent} % (w/v)?`;
-                document.getElementById("answerLabel").textContent = "Ange antal gram (en decimal):";
-                document.getElementById("answer").placeholder = "t.ex. 1.5";
-            } else if (caseType === 1) {
-                // Vikt/vikt-procent: Hur många gram i X g för Y %?
-                total = [100, 250, 500, 1000][Math.floor(Math.random() * 4)];
-                percent = (Math.floor(Math.random() * 19) + 1) / 10; // 0.1–2.0 %
-                correctAnswer = ((percent * total) / 100).toFixed(1);
-                calcText = `${percent} % = ${percent} g/100 g ⇒ (${percent} g × ${total}/100) = ${correctAnswer} g`;
+                    `Hur många ${selectedType.activeUnit} ${selectedType.activeName} behövs för att bereda ${total} ${selectedType.totalUnit} ${selectedType.product} med styrkan ${formatNumber(percent)} % (${selectedType.code})?`;
+                calcText = `${formatNumber(percent)} ${selectedType.activeUnit}/100 ${selectedType.totalUnit} × ${total} ${selectedType.totalUnit} = ${formatNumber(correctAnswer)} ${selectedType.activeUnit}`;
+            } else if (questionDirection === 1) {
+                correctAnswer = percent;
+                answerUnit = `% (${selectedType.code})`;
                 document.getElementById("problem").textContent =
-                    `Hur många gram aktiv substans behövs för att blanda ${total} g salva med styrkan ${percent} % (w/w)?`;
-                document.getElementById("answerLabel").textContent = "Ange antal gram (en decimal):";
-                document.getElementById("answer").placeholder = "t.ex. 1.5";
+                    `En ${selectedType.product} innehåller ${formatNumber(activeAmount)} ${selectedType.activeUnit} ${selectedType.activeName} i totalt ${total} ${selectedType.totalUnit}. Vilken är styrkan i procent (${selectedType.code})?`;
+                calcText = `${formatNumber(activeAmount)} ${selectedType.activeUnit} ÷ ${total} ${selectedType.totalUnit} × 100 = ${formatNumber(correctAnswer)} % (${selectedType.code})`;
             } else {
-                // Volym/volym-procent: Hur många mL i X mL för Y %?
-                total = [100, 250, 500, 1000][Math.floor(Math.random() * 4)];
-                percent = (Math.floor(Math.random() * 19) + 1) / 10; // 0.1–2.0 %
-                correctAnswer = ((percent * total) / 100).toFixed(1);
-                calcText = `${percent} % = ${percent} mL/100 mL ⇒ (${percent} mL × ${total}/100) = ${correctAnswer} mL`;
+                correctAnswer = total;
+                answerUnit = selectedType.totalUnit;
                 document.getElementById("problem").textContent =
-                    `Hur många mL substans behövs för att blanda ${total} mL lösning med styrkan ${percent} % (v/v)?`;
-                document.getElementById("answerLabel").textContent = "Ange antal mL (en decimal):";
-                document.getElementById("answer").placeholder = "t.ex. 1.5";
+                    `Du har ${formatNumber(activeAmount)} ${selectedType.activeUnit} ${selectedType.activeName} och ska bereda en ${selectedType.product} med styrkan ${formatNumber(percent)} % (${selectedType.code}). Hur stor total mängd i ${selectedType.totalUnit} kan beredas?`;
+                calcText = `${formatNumber(activeAmount)} ${selectedType.activeUnit} × 100 ${selectedType.totalUnit} ÷ ${formatNumber(percent)} ${selectedType.activeUnit} = ${formatNumber(correctAnswer)} ${selectedType.totalUnit}`;
             }
 
-            document.getElementById("result").textContent = '';
-            document.getElementById("calculation").textContent = '';
-            document.getElementById("answer").value = '';
+            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit}:`;
+            document.getElementById("answer").value = "";
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").textContent = "";
         }
 
         function checkAnswer() {
-            let userInput = document.getElementById("answer").value.replace(",", ".").trim();
-            let user = Number(parseFloat(userInput).toFixed(1));
-            let correct = Number(correctAnswer);
+            const rawAnswer = document.getElementById("answer").value.trim().replace(",", ".");
+            const userAnswer = Number(rawAnswer);
+            const roundedCorrect = Math.round((correctAnswer + Number.EPSILON) * 100) / 100;
 
-            let isCorrect = (user === correct);
+            if (rawAnswer === "" || !Number.isFinite(userAnswer)) {
+                document.getElementById("result").textContent = "Skriv ett giltigt tal.";
+                document.getElementById("result").style.color = "#a33";
+                document.getElementById("calculation").textContent = "";
+                return;
+            }
 
-            if (isCorrect) {
+            if (Math.abs(userAnswer - roundedCorrect) < 0.005) {
                 document.getElementById("result").textContent = "Rätt svar!";
                 document.getElementById("result").style.color = "#195";
             } else {
-                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${correctAnswer}.`;
+                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${formatNumber(roundedCorrect)} ${answerUnit}.`;
                 document.getElementById("result").style.color = "#a33";
             }
+
             document.getElementById("calculation").textContent = `Beräkning: ${calcText}`;
         }
 
-        // Starta med en slumpad fråga direkt
+        document.getElementById("answer").addEventListener("keydown", event => {
+            if (event.key === "Enter") checkAnswer();
+        });
+
         window.onload = randomizeCase;
     </script>
 </body>
