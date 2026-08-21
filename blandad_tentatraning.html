@@ -27,8 +27,7 @@
     <main class="container">
         <h1 id="pageHeading">Blandad tentaträning</h1>
         <p id="levelDescription"></p>
-        <button type="button" onclick="randomizeExercise()">Slumpa ny uppgift</button>
-        <a class="back-link" href="index.html">Till startsidan</a>
+        <a class="back-link" href="index.html" style="margin-left:0;">Till startsidan</a>
         <p id="areaName" aria-live="polite"></p>
         <iframe id="exerciseFrame" title="Slumpad läkemedelsberäkningsuppgift"></iframe>
         <button id="nextButton" class="next-button" type="button" onclick="randomizeExercise()">Nästa blandade uppgift</button>
@@ -99,11 +98,11 @@
         if (level === "avancerad") {
             document.getElementById("pageHeading").textContent = "Blandad tentaträning – avancerad nivå";
             document.getElementById("levelDescription").textContent =
-                "Varje knapptryck slumpar en ny uppgift från samtliga områden, inklusive syrgas och procenträkning.";
+                "En uppgift slumpas från samtliga områden, inklusive syrgas och procenträkning. När du har kontrollerat ditt svar kan du gå vidare till nästa blandade uppgift.";
         } else {
             document.getElementById("pageHeading").textContent = "Blandad tentaträning – grundnivå";
             document.getElementById("levelDescription").textContent =
-                "Varje knapptryck slumpar en ny uppgift från grundområdena, utan syrgas och procenträkning.";
+                "En uppgift slumpas från grundområdena, utan syrgas och procenträkning. När du har kontrollerat ditt svar kan du gå vidare till nästa blandade uppgift.";
         }
 
         document.getElementById("exerciseFrame").addEventListener("load", watchForAnsweredExercise);
