@@ -8,7 +8,7 @@
         h1 { color: #195; }
         .card { background: #fff; padding: 32px; max-width: 400px; margin: auto; border-radius: 16px; box-shadow: 0 6px 24px #0001;}
         label, input, button { font-size: 1rem; margin-top: 12px; }
-        input[type="number"] { width: 120px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
+        input[type="number"], input[type="text"] { width: 120px; padding: 4px 10px; border-radius: 6px; border: 1px solid #aaa;}
         button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
         #result { font-weight: bold; margin-top: 16px;}
         #calculation { color: #555; }
@@ -17,85 +17,106 @@
 <body>
     <div class="card">
         <h1>Läkemedelsberäkning</h1>
-        <p>
-            En läkare ordinerar ett läkemedel med dosen <span id="X">___</span>,
-            styrkan <span id="Y">___</span>, och en mängd på <span id="Z">___</span>.
-        </p>
+        <p id="problem"></p>
         <button onclick="randomizeValues()">Slumpa värden</button>
         <br><br>
-        <label for="studentAnswer">Ange ditt svar:</label>
-        <input type="number" id="studentAnswer" placeholder="Ditt svar">
+        <label id="answerLabel" for="studentAnswer">Ange ditt svar:</label>
+        <input type="text" id="studentAnswer" placeholder="Ditt svar">
         <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result"></p>
         <p id="calculation"></p>
     </div>
     <script>
-        let correctAnswer = null;
-        let currentHidden = 0; // 0=X, 1=Y, 2=Z
+        const liquidStrengths = [1, 2, 5, 10, 20, 25, 50, 100];
+        const liquidVolumes = [0.5, 1, 2, 5, 10, 20];
+        const tabletStrengths = [50, 100, 200, 250, 400, 500];
+        const tabletCounts = [0.5, 1, 1.5, 2, 2.5, 3];
+
+        let correctAnswer, answerUnit, calculationText;
+
+        const pick = values => values[Math.floor(Math.random() * values.length)];
+
+        function formatNumber(value) {
+            return Number(value.toFixed(2)).toString().replace(".", ",");
+        }
 
         function randomizeValues() {
-            let possibleY = [5, 10, 20];
-            let possibleZ = [10, 20, 50, 100, 200];
+            const questionType = Math.floor(Math.random() * 5);
+            let problemText = "";
 
-            let Y = possibleY[Math.floor(Math.random() * possibleY.length)];
-            let Z = possibleZ[Math.floor(Math.random() * possibleZ.length)];
-            let X = Y * Z;
+            if (questionType < 3) {
+                const strength = pick(liquidStrengths);
+                const volume = pick(liquidVolumes);
+                const dose = strength * volume;
 
-            currentHidden = Math.floor(Math.random() * 3);
-
-            if (currentHidden === 0) {
-                document.getElementById('X').textContent = '___ mg';
-                document.getElementById('Y').textContent = Y + ' mg/mL';
-                document.getElementById('Z').textContent = Z + ' mL';
-                correctAnswer = Y * Z;
-            } else if (currentHidden === 1) {
-                document.getElementById('X').textContent = X + ' mg';
-                document.getElementById('Y').textContent = '___ mg/mL';
-                document.getElementById('Z').textContent = Z + ' mL';
-                correctAnswer = X / Z;
+                if (questionType === 0) {
+                    correctAnswer = volume;
+                    answerUnit = "mL";
+                    problemText = `En patient är ordinerad ${formatNumber(dose)} mg av ett läkemedel. Läkemedlets styrka är ${formatNumber(strength)} mg/mL. Hur många mL ska administreras?`;
+                    calculationText = `${formatNumber(dose)} mg ÷ ${formatNumber(strength)} mg/mL = ${formatNumber(correctAnswer)} mL`;
+                } else if (questionType === 1) {
+                    correctAnswer = dose;
+                    answerUnit = "mg";
+                    problemText = `En patient får ${formatNumber(volume)} mL av ett läkemedel med styrkan ${formatNumber(strength)} mg/mL. Hur stor dos i mg får patienten?`;
+                    calculationText = `${formatNumber(strength)} mg/mL × ${formatNumber(volume)} mL = ${formatNumber(correctAnswer)} mg`;
+                } else {
+                    correctAnswer = strength;
+                    answerUnit = "mg/mL";
+                    problemText = `En läkemedelslösning innehåller totalt ${formatNumber(dose)} mg i ${formatNumber(volume)} mL. Vilken styrka har lösningen i mg/mL?`;
+                    calculationText = `${formatNumber(dose)} mg ÷ ${formatNumber(volume)} mL = ${formatNumber(correctAnswer)} mg/mL`;
+                }
             } else {
-                document.getElementById('X').textContent = X + ' mg';
-                document.getElementById('Y').textContent = Y + ' mg/mL';
-                document.getElementById('Z').textContent = '___ mL';
-                correctAnswer = X / Y;
+                const strength = pick(tabletStrengths);
+                const numberOfTablets = pick(tabletCounts);
+                const dose = strength * numberOfTablets;
+                const tabletWord = numberOfTablets === 1 ? "tablett" : "tabletter";
+
+                if (questionType === 3) {
+                    correctAnswer = numberOfTablets;
+                    answerUnit = "tabletter";
+                    problemText = `En patient är ordinerad ${formatNumber(dose)} mg. Varje tablett innehåller ${formatNumber(strength)} mg. Hur många tabletter ska patienten få?`;
+                    calculationText = `${formatNumber(dose)} mg ÷ ${formatNumber(strength)} mg/tablett = ${formatNumber(correctAnswer)} ${tabletWord}`;
+                } else {
+                    correctAnswer = dose;
+                    answerUnit = "mg";
+                    problemText = `En patient får ${formatNumber(numberOfTablets)} ${tabletWord}. Varje tablett innehåller ${formatNumber(strength)} mg. Hur stor total dos i mg får patienten?`;
+                    calculationText = `${formatNumber(strength)} mg/tablett × ${formatNumber(numberOfTablets)} ${tabletWord} = ${formatNumber(correctAnswer)} mg`;
+                }
             }
-            document.getElementById('studentAnswer').value = '';
-            document.getElementById('result').textContent = '';
-            document.getElementById('calculation').textContent = '';
+
+            document.getElementById("problem").textContent = problemText;
+            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit}:`;
+            document.getElementById("studentAnswer").value = "";
+            document.getElementById("result").textContent = "";
+            document.getElementById("calculation").textContent = "";
         }
 
         function checkAnswer() {
-            let displayedX = document.getElementById('X').textContent.replace(' mg', '');
-            let displayedY = document.getElementById('Y').textContent.replace(' mg/mL', '');
-            let displayedZ = document.getElementById('Z').textContent.replace(' mL', '');
+            const rawAnswer = document.getElementById("studentAnswer").value.trim().replace(",", ".");
+            const studentAnswer = Number(rawAnswer);
 
-            let studentInput = Number(document.getElementById('studentAnswer').value);
-
-            let explanation = '';
-            let answer = 0;
-
-            if (currentHidden === 0) {
-                answer = Number(displayedY) * Number(displayedZ);
-                explanation = `${displayedY} mg/mL × ${displayedZ} mL = ${answer} mg`;
-            } else if (currentHidden === 1) {
-                answer = Number(displayedX) / Number(displayedZ);
-                explanation = `${displayedX} mg ÷ ${displayedZ} mL = ${answer} mg/mL`;
-            } else {
-                answer = Number(displayedX) / Number(displayedY);
-                explanation = `${displayedX} mg ÷ ${displayedY} mg/mL = ${answer} mL`;
+            if (rawAnswer === "" || !Number.isFinite(studentAnswer)) {
+                document.getElementById("result").textContent = "Skriv ett giltigt tal.";
+                document.getElementById("result").style.color = "#a33";
+                document.getElementById("calculation").textContent = "";
+                return;
             }
 
-            if (studentInput === answer) {
-                document.getElementById('result').textContent = "Rätt svar!";
-                document.getElementById('result').style.color = "#195";
+            if (Math.abs(studentAnswer - correctAnswer) < 0.001) {
+                document.getElementById("result").textContent = "Rätt svar!";
+                document.getElementById("result").style.color = "#195";
             } else {
-                document.getElementById('result').textContent = `Fel svar. Rätt svar är ${answer}.`;
-                document.getElementById('result').style.color = "#a33";
+                document.getElementById("result").textContent = `Fel svar. Rätt svar är ${formatNumber(correctAnswer)} ${answerUnit}.`;
+                document.getElementById("result").style.color = "#a33";
             }
-            document.getElementById('calculation').textContent = `Beräkning: ${explanation}`;
+
+            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
         }
 
-        // Slumpa ett första problem när sidan laddas
+        document.getElementById("studentAnswer").addEventListener("keydown", event => {
+            if (event.key === "Enter") checkAnswer();
+        });
+
         window.onload = randomizeValues;
     </script>
 </body>
