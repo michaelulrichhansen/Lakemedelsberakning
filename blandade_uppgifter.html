@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blandade uppgifter – Läkemedelsberäkning</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f7f7f7; }
+        .container { background: #fff; max-width: 760px; margin: 40px auto; padding: 28px 32px; border-radius: 16px; box-shadow: 0 6px 24px #0001; }
+        h1 { color: #195; margin-top: 0; }
+        #levelDescription { color: #555; line-height: 1.4; }
+        button { border-radius: 6px; padding: 10px 18px; border: none; background: #3b7; color: #fff; cursor: pointer; font-size: 1rem; }
+        button:hover { background: #2a6; }
+        .back-link { display: inline-block; margin-left: 14px; color: #1166cc; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; color: #199; }
+        #areaName { font-weight: bold; color: #195; margin: 22px 0 8px; }
+        iframe { width: 100%; height: 760px; border: 1px solid #ddd; border-radius: 12px; background: #f7f7f7; }
+        .next-button { display: block; position: sticky; bottom: 16px; margin: 18px auto 0; padding: 12px 22px; box-shadow: 0 4px 14px #0002; }
+        @media (max-width: 840px) {
+            .container { margin: 16px; padding: 22px 18px; }
+            iframe { height: 820px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1 id="pageHeading">Blandade uppgifter</h1>
+        <p id="levelDescription"></p>
+        <a class="back-link" href="index.html" style="margin-left:0;">Till startsidan</a>
+        <p id="areaName" aria-live="polite"></p>
+        <iframe id="exerciseFrame" title="Slumpad läkemedelsberäkningsuppgift"></iframe>
+        <button id="nextButton" class="next-button" type="button" onclick="goToNextExercise()">Nästa blandade uppgift</button>
+    </main>
+
+    <script>
+        const basicPages = [
+            { file: "dos_styrka_och_mangd.html", name: "Dos, styrka och mängd" },
+            { file: "avrundningsregler.html", name: "Avrundningsregler" },
+            { file: "enhetsomvandling.html", name: "Enhetsomvandling" },
+            { file: "kroppsvikt.html", name: "Kroppsvikt" },
+            { file: "kroppsyta.html", name: "Kroppsyta" },
+            { file: "inhalationer.html", name: "Inhalationer" },
+            { file: "droppar.html", name: "Droppar" },
+            { file: "depotplaster.html", name: "Depotplåster" },
+            { file: "berakning_av_tid.html", name: "Beräkning av tid" },
+            { file: "dropphastighet.html", name: "Infusions- och dropphastighet" },
+            { file: "injektionshastighet.html", name: "Injektionshastighet" },
+            { file: "enklare_spadningar.html", name: "Enklare spädningar" }
+        ];
+
+        const advancedPages = [
+            ...basicPages,
+            { file: "syrgas.html", name: "Syrgas" },
+            { file: "procentrakning.html", name: "Procenträkning" }
+        ];
+
+        const level = new URLSearchParams(window.location.search).get("niva") === "avancerad"
+            ? "avancerad"
+            : "grund";
+        const availablePages = level === "avancerad" ? advancedPages : basicPages;
+        let previousFile = "";
+        let frameResizeObserver;
+
+        function updateFrameHeight() {
+            try {
+                const frame = document.getElementById("exerciseFrame");
+                const frameDocument = frame.contentDocument;
+                if (!frameDocument) return;
+
+                const bodyHeight = frameDocument.body ? frameDocument.body.scrollHeight : 0;
+                const documentHeight = frameDocument.documentElement
+                    ? frameDocument.documentElement.scrollHeight
+                    : 0;
+                const contentHeight = Math.max(bodyHeight, documentHeight, 420);
+                frame.style.height = `${contentHeight + 24}px`;
+            } catch (error) {
+                // Den fasta höjden i sidans CSS används som reserv.
+            }
+        }
+
+        function watchForAnsweredExercise() {
+            if (frameResizeObserver) frameResizeObserver.disconnect();
+
+            try {
+                const frameDocument = document.getElementById("exerciseFrame").contentDocument;
+                if (!frameDocument) return;
+
+                updateFrameHeight();
+                frameResizeObserver = new ResizeObserver(updateFrameHeight);
+                if (frameDocument.body) frameResizeObserver.observe(frameDocument.body);
+                if (frameDocument.documentElement) frameResizeObserver.observe(frameDocument.documentElement);
+            } catch (error) {
+                // På den publicerade webbplatsen ligger alla sidor på samma domän.
+                // Knappen högst upp fungerar alltid även om en lokal förhandsvisning
+                // skulle blockera läsning mellan ramarna.
+            }
+        }
+
+        function randomizeExercise() {
+            let selectedPage;
+            do {
+                selectedPage = availablePages[Math.floor(Math.random() * availablePages.length)];
+            } while (selectedPage.file === previousFile && availablePages.length > 1);
+
+            previousFile = selectedPage.file;
+            document.getElementById("areaName").textContent = `Övningsområde: ${selectedPage.name}`;
+            document.getElementById("exerciseFrame").src = `${selectedPage.file}?blandad=${Date.now()}`;
+        }
+
+        function goToNextExercise() {
+            randomizeExercise();
+            document.getElementById("areaName").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        if (level === "avancerad") {
+            document.getElementById("pageHeading").textContent = "Blandade uppgifter – avancerad nivå";
+            document.getElementById("levelDescription").textContent =
+                "Uppgifterna hämtas från samtliga områden, inklusive syrgas och procenträkning. När du har kontrollerat ditt svar kan du gå vidare till nästa blandade uppgift.";
+        } else {
+            document.getElementById("pageHeading").textContent = "Blandade uppgifter – grundnivå";
+            document.getElementById("levelDescription").textContent =
+                "Uppgifterna hämtas från grundområdena, utan syrgas och procenträkning. När du har kontrollerat ditt svar kan du gå vidare till nästa blandade uppgift.";
+        }
+
+        document.getElementById("exerciseFrame").addEventListener("load", watchForAnsweredExercise);
+        randomizeExercise();
+    </script>
+</body>
+</html>
