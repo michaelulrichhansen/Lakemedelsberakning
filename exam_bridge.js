@@ -67,6 +67,7 @@
         const checkButton = Array.from(document.querySelectorAll("button"))
             .find(button => button.textContent.trim().toLowerCase() === "kontrollera svar");
         if (!checkButton) return;
+        checkButton.textContent = "Registrera svar och gå till nästa uppgift";
 
         const resultElement = findElement(["result", "response"]);
         if (resultElement) {

@@ -57,7 +57,13 @@
         const level = new URLSearchParams(window.location.search).get("niva") === "avancerad"
             ? "avancerad"
             : "grund";
-        const availablePages = level === "avancerad" ? advancedPages : basicPages;
+        const requestedFiles = (new URLSearchParams(window.location.search).get("omraden") || "")
+            .split(",")
+            .filter(Boolean);
+        const levelPages = level === "avancerad" ? advancedPages : basicPages;
+        const requestedPages = levelPages.filter(page => requestedFiles.includes(page.file));
+        const targetedPractice = requestedPages.length > 0;
+        const availablePages = targetedPractice ? requestedPages : levelPages;
         let previousFile = "";
         let frameResizeObserver;
 
@@ -112,7 +118,11 @@
             document.getElementById("areaName").scrollIntoView({ behavior: "smooth", block: "start" });
         }
 
-        if (level === "avancerad") {
+        if (targetedPractice) {
+            document.getElementById("pageHeading").textContent = "Träna på mina förbättringsområden";
+            document.getElementById("levelDescription").textContent =
+                `Här får du blandade uppgifter från de områden du hade fel på: ${availablePages.map(page => page.name).join(", ")}.`;
+        } else if (level === "avancerad") {
             document.getElementById("pageHeading").textContent = "Blandade uppgifter – avancerad nivå";
             document.getElementById("levelDescription").textContent =
                 "Uppgifterna hämtas från samtliga områden, inklusive syrgas och procenträkning. När du har kontrollerat ditt svar kan du gå vidare till nästa blandade uppgift.";

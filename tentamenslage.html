@@ -38,7 +38,7 @@
         <section id="introView">
             <h1 id="introHeading">Tentamensläge</h1>
             <p class="intro-text" id="introDescription"></p>
-            <p class="intro-text">Du får tio uppgifter från olika beräkningsområden. När du trycker på <strong>Kontrollera svar</strong> registreras resultatet och nästa fråga visas automatiskt. Efter den sista uppgiften får du se ditt resultat och vad du behöver träna mer på.</p>
+            <p class="intro-text">Du får tio uppgifter från olika beräkningsområden. När du trycker på <strong>Registrera svar och gå till nästa uppgift</strong> sparas svaret och nästa fråga visas automatiskt. Efter den sista uppgiften får du se ditt resultat och vad du behöver träna mer på.</p>
             <button type="button" onclick="startExam()">Starta tentamen</button>
             <a class="back-link" href="index.html">Till startsidan</a>
         </section>
@@ -50,7 +50,7 @@
                 <span id="answeredCounter">0 besvarade</span>
             </div>
             <div class="progress-track" aria-hidden="true"><div id="progressBar" class="progress-bar"></div></div>
-            <p id="examMessage">Besvara uppgiften och tryck på Kontrollera svar.</p>
+            <p id="examMessage">Besvara uppgiften och registrera ditt svar.</p>
             <p id="areaName"></p>
             <iframe id="exerciseFrame" title="Tentamensuppgift"></iframe>
         </section>
@@ -61,6 +61,7 @@
             <p id="resultMessage"></p>
             <div id="improvementList"></div>
             <div class="summary-actions">
+                <button id="practiceWeakAreasButton" type="button" class="hidden" onclick="practiceWeakAreas()">Träna på mina förbättringsområden</button>
                 <button type="button" onclick="startExam()">Gör en ny tenta</button>
                 <a class="back-link" href="index.html">Till startsidan</a>
             </div>
@@ -136,7 +137,7 @@
             document.getElementById("answeredCounter").textContent = `${results.length} besvarade`;
             document.getElementById("progressBar").style.width = `${(results.length / questionCount) * 100}%`;
             document.getElementById("areaName").textContent = `Övningsområde: ${currentPage.name}`;
-            document.getElementById("examMessage").textContent = "Besvara uppgiften och tryck på Kontrollera svar.";
+            document.getElementById("examMessage").textContent = "Besvara uppgiften och registrera ditt svar.";
             document.getElementById("exerciseFrame").src = `${currentPage.file}?tentamen=${Date.now()}`;
             document.getElementById("areaName").scrollIntoView({ behavior: "smooth", block: "start" });
         }
@@ -168,7 +169,8 @@
                 if (frameDocument.documentElement) frameResizeObserver.observe(frameDocument.documentElement);
 
                 const checkButton = Array.from(frameDocument.querySelectorAll("button"))
-                    .find(button => button.textContent.trim().toLowerCase() === "kontrollera svar");
+                    .find(button => ["kontrollera svar", "registrera svar och gå till nästa uppgift"]
+                        .includes(button.textContent.trim().toLowerCase()));
                 if (!checkButton) throw new Error("Kontrollknappen kunde inte hittas.");
 
                 checkButton.addEventListener("click", () => {
@@ -211,6 +213,7 @@
             answerIsBeingProcessed = true;
             results.push({
                 area: examPages[currentIndex].name,
+                file: examPages[currentIndex].file,
                 correct: Boolean(answerData.correct),
                 problem: answerData.problem || "Uppgift",
                 studentAnswer: answerData.studentAnswer || "",
@@ -252,7 +255,11 @@
                 : `Du behöver framför allt träna vidare på ${[...new Set(incorrectResults.map(result => result.area))].join(", ")}.`;
 
             const list = document.getElementById("improvementList");
+            const practiceButton = document.getElementById("practiceWeakAreasButton");
             list.innerHTML = "";
+            if (practiceButton) {
+                practiceButton.classList.toggle("hidden", incorrectResults.length === 0);
+            }
 
             if (incorrectResults.length === 0) {
                 const card = document.createElement("div");
@@ -283,6 +290,19 @@
             }
 
             window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function practiceWeakAreas() {
+            const files = [...new Set(results
+                .filter(result => !result.correct)
+                .map(result => result.file)
+                .filter(Boolean))];
+            if (files.length === 0) return;
+            const params = new URLSearchParams({
+                niva: level,
+                omraden: files.join(",")
+            });
+            window.location.href = `blandade_uppgifter.html?${params.toString()}`;
         }
 
         document.getElementById("exerciseFrame").addEventListener("load", connectToQuestion);
