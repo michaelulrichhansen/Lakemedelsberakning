@@ -45,30 +45,30 @@
         </ul>
 
         <section class="exam-training">
-            <h2>Blandad tentaträning</h2>
+            <h2>Blandade uppgifter</h2>
             <p>Välj nivå och låt sidan slumpa ett övningsområde åt dig.</p>
 
             <div class="training-option">
-                <h3>Grundnivå</h3>
+                <h3>Blandade uppgifter – grundnivå</h3>
                 <p>Slumpar bland övningsområdena utan syrgas och procenträkning.</p>
-                <button type="button" onclick="randomizeBasic()">Slumpa grunduppgift</button>
+                <button type="button" onclick="randomizeBasic()">Starta grundnivå</button>
             </div>
 
             <div class="training-option">
-                <h3>Avancerad nivå</h3>
+                <h3>Blandade uppgifter – avancerad nivå</h3>
                 <p>Slumpar bland samtliga övningsområden, inklusive syrgas och procenträkning.</p>
-                <button type="button" onclick="randomizeAdvanced()">Slumpa avancerad uppgift</button>
+                <button type="button" onclick="randomizeAdvanced()">Starta avancerad nivå</button>
             </div>
         </section>
     </div>
 
     <script>
         function randomizeBasic() {
-            window.location.href = "blandad_tentatraning.html?niva=grund";
+            window.location.href = "blandade_uppgifter.html?niva=grund";
         }
 
         function randomizeAdvanced() {
-            window.location.href = "blandad_tentatraning.html?niva=avancerad";
+            window.location.href = "blandade_uppgifter.html?niva=avancerad";
         }
     </script>
 </body>
