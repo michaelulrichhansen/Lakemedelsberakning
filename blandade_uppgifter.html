@@ -16,6 +16,9 @@
         #areaName { font-weight: bold; color: #195; margin: 22px 0 8px; }
         iframe { width: 100%; height: 760px; border: 1px solid #ddd; border-radius: 12px; background: #f7f7f7; }
         .next-button { display: block; position: sticky; bottom: 16px; margin: 18px auto 0; padding: 12px 22px; box-shadow: 0 4px 14px #0002; }
+        .breadcrumb { color: #666; font-size: 0.95rem; margin-bottom: 18px; }
+        .breadcrumb a { color: #1166cc; text-decoration: none; }
+        .site-version { color: #777; font-size: 0.85rem; text-align: center; margin: 24px 0 0; }
         @media (max-width: 840px) {
             .container { margin: 16px; padding: 22px 18px; }
             iframe { height: 820px; }
@@ -24,12 +27,14 @@
 </head>
 <body>
     <main class="container">
+        <nav class="breadcrumb" aria-label="Du är här"><a href="index.html">Startsida</a> <span aria-hidden="true">›</span> <span id="breadcrumbCurrent">Blandade uppgifter</span></nav>
         <h1 id="pageHeading">Blandade uppgifter</h1>
         <p id="levelDescription"></p>
         <a class="back-link" href="index.html" style="margin-left:0;">Till startsidan</a>
         <p id="areaName" aria-live="polite"></p>
         <iframe id="exerciseFrame" title="Slumpad läkemedelsberäkningsuppgift"></iframe>
         <button id="nextButton" class="next-button" type="button" onclick="goToNextExercise()">Nästa blandade uppgift</button>
+        <p class="site-version">Senast uppdaterad augusti 2026</p>
     </main>
 
     <script>
@@ -131,6 +136,9 @@
             document.getElementById("levelDescription").textContent =
                 "Uppgifterna hämtas från grundområdena, utan syrgas och procenträkning. När du har kontrollerat ditt svar kan du gå vidare till nästa blandade uppgift.";
         }
+
+        const breadcrumbCurrent = document.getElementById("breadcrumbCurrent");
+        if (breadcrumbCurrent) breadcrumbCurrent.textContent = document.getElementById("pageHeading").textContent;
 
         document.getElementById("exerciseFrame").addEventListener("load", watchForAnsweredExercise);
         randomizeExercise();

@@ -37,9 +37,32 @@
     }
 
     function connect() {
+        const heading = document.querySelector("h1");
+        const card = document.querySelector(".card") || document.querySelector("main") || document.body;
+        if (heading && card && !document.querySelector(".site-breadcrumb")) {
+            const headingParts = heading.innerText.split(/\n+/).map(part => part.trim()).filter(Boolean);
+            const pageName = headingParts[headingParts.length - 1] || document.title;
+            const breadcrumb = document.createElement("nav");
+            breadcrumb.className = "site-breadcrumb";
+            breadcrumb.setAttribute("aria-label", "Du är här");
+            breadcrumb.style.cssText = "margin:0 0 18px;color:#666;font-size:.95rem;";
+            breadcrumb.innerHTML = '<a href="index.html" target="_top" style="color:#1166cc;text-decoration:none;">Startsida</a> <span aria-hidden="true">›</span> <span></span>';
+            breadcrumb.querySelector("span:last-child").textContent = pageName;
+            card.insertBefore(breadcrumb, heading);
+        }
+
+        if (card && !document.querySelector(".site-version")) {
+            const version = document.createElement("p");
+            version.className = "site-version";
+            version.textContent = "Senast uppdaterad augusti 2026";
+            version.style.cssText = "margin:22px 0 0;color:#777;font-size:.85rem;text-align:center;";
+            card.appendChild(version);
+        }
+
         const answerElement = document.querySelector("input[type='text'], input[type='number']");
         if (answerElement) {
             if (typeof answerElement.setAttribute === "function") {
+                answerElement.setAttribute("placeholder", "Ditt svar");
                 answerElement.setAttribute("inputmode", "decimal");
             }
             const focusAnswer = () => {
@@ -56,6 +79,23 @@
                 });
                 focusObserver.observe(problemElement, { childList: true, subtree: true, characterData: true });
             }
+        }
+
+        const answerLabel = document.getElementById("answerLabel") ||
+            (answerElement && answerElement.id ? document.querySelector(`label[for='${answerElement.id}']`) : null);
+        if (answerLabel) {
+            const normalizeLabel = () => {
+                const normalizedText = answerLabel.textContent
+                    .replace(/^Ange ditt svar/, "Skriv ditt svar")
+                    .replace(/^Ange antal/, "Skriv antal")
+                    .replace(/^Ange flaska/, "Skriv flaska");
+                if (normalizedText !== answerLabel.textContent) {
+                    answerLabel.textContent = normalizedText;
+                }
+            };
+            normalizeLabel();
+            const labelObserver = new MutationObserver(normalizeLabel);
+            labelObserver.observe(answerLabel, { childList: true, subtree: true, characterData: true });
         }
 
         if (!examMode) return;

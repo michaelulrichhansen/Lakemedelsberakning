@@ -26,6 +26,9 @@
         .result-card p { margin: 6px 0; line-height: 1.4; }
         .calculation { color: #555; font-size: 0.95rem; }
         .summary-actions { margin-top: 22px; }
+        .breadcrumb { color: #666; font-size: 0.95rem; margin-bottom: 18px; }
+        .breadcrumb a { color: #1166cc; text-decoration: none; }
+        .site-version { color: #777; font-size: 0.85rem; text-align: center; margin: 26px 0 0; }
         @media (max-width: 840px) {
             .container { margin: 16px; padding: 22px 18px; }
             iframe { height: 820px; }
@@ -35,6 +38,7 @@
 </head>
 <body>
     <main class="container">
+        <nav class="breadcrumb" aria-label="Du är här"><a href="index.html">Startsida</a> <span aria-hidden="true">›</span> <span id="breadcrumbCurrent">Tentamensläge</span></nav>
         <section id="introView">
             <h1 id="introHeading">Tentamensläge</h1>
             <p class="intro-text" id="introDescription"></p>
@@ -66,6 +70,7 @@
                 <a class="back-link" href="index.html">Till startsidan</a>
             </div>
         </section>
+        <p class="site-version">Senast uppdaterad augusti 2026</p>
     </main>
 
     <script>
@@ -114,6 +119,8 @@
             const levelName = level === "avancerad" ? "avancerad nivå" : "grundnivå";
             document.getElementById("introHeading").textContent = `Tentamensläge – ${levelName}`;
             document.getElementById("examHeading").textContent = `Tentamensläge – ${levelName}`;
+            const breadcrumbCurrent = document.getElementById("breadcrumbCurrent");
+            if (breadcrumbCurrent) breadcrumbCurrent.textContent = `Tentamensläge – ${levelName}`;
             document.getElementById("introDescription").textContent = level === "avancerad"
                 ? "Tentamen innehåller samtliga beräkningsområden, inklusive syrgas och procenträkning."
                 : "Tentamen innehåller grundområdena, utan syrgas och procenträkning.";
