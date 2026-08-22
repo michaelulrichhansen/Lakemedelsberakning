@@ -60,6 +60,23 @@
                 <button type="button" onclick="randomizeAdvanced()">Starta avancerad nivå</button>
             </div>
         </section>
+
+        <section class="exam-training">
+            <h2>Inför tentamen</h2>
+            <p>Genomför en omgång med tio blandade uppgifter och få ett resultat som visar vilka områden du behöver träna mer på.</p>
+
+            <div class="training-option">
+                <h3>Tentamensläge – grundnivå</h3>
+                <p>Tio uppgifter från grundområdena. Syrgas och procenträkning ingår inte.</p>
+                <button type="button" onclick="startBasicExam()">Starta tenta – grundnivå</button>
+            </div>
+
+            <div class="training-option">
+                <h3>Tentamensläge – avancerad nivå</h3>
+                <p>Tio uppgifter från samtliga områden, inklusive syrgas och procenträkning.</p>
+                <button type="button" onclick="startAdvancedExam()">Starta tenta – avancerad nivå</button>
+            </div>
+        </section>
     </div>
 
     <script>
@@ -69,6 +86,14 @@
 
         function randomizeAdvanced() {
             window.location.href = "blandade_uppgifter.html?niva=avancerad";
+        }
+
+        function startBasicExam() {
+            window.location.href = "tentamenslage.html?niva=grund";
+        }
+
+        function startAdvancedExam() {
+            window.location.href = "tentamenslage.html?niva=avancerad";
         }
     </script>
 </body>
