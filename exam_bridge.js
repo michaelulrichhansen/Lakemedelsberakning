@@ -1,6 +1,6 @@
 (function () {
     const params = new URLSearchParams(window.location.search);
-    if (!params.has("tentamen") || window.parent === window) return;
+    const examMode = params.has("tentamen") && window.parent !== window;
 
     let answerSent = false;
 
@@ -37,6 +37,33 @@
     }
 
     function connect() {
+        const answerElement = document.querySelector("input[type='text'], input[type='number']");
+        if (answerElement) {
+            if (typeof answerElement.setAttribute === "function") {
+                answerElement.setAttribute("inputmode", "decimal");
+            }
+            const focusAnswer = () => {
+                if (typeof answerElement.focus === "function") {
+                    answerElement.focus({ preventScroll: true });
+                }
+            };
+            focusAnswer();
+
+            const problemElement = findElement(["problem", "problemText", "question"]) || document.querySelector(".problem");
+            if (problemElement) {
+                const focusObserver = new MutationObserver(() => {
+                    window.setTimeout(focusAnswer, 0);
+                });
+                focusObserver.observe(problemElement, { childList: true, subtree: true, characterData: true });
+            }
+        }
+
+        if (!examMode) return;
+
+        const randomizeButton = Array.from(document.querySelectorAll("button"))
+            .find(button => button.textContent.trim().toLowerCase() === "slumpa värden");
+        if (randomizeButton) randomizeButton.style.display = "none";
+
         const checkButton = Array.from(document.querySelectorAll("button"))
             .find(button => button.textContent.trim().toLowerCase() === "kontrollera svar");
         if (!checkButton) return;
