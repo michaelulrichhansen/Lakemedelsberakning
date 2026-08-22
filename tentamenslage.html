@@ -220,9 +220,8 @@
 
             document.getElementById("answeredCounter").textContent = `${results.length} besvarade`;
             document.getElementById("progressBar").style.width = `${(results.length / questionCount) * 100}%`;
-            document.getElementById("examMessage").textContent = answerData.correct
-                ? "Rätt svar – nästa uppgift kommer nu."
-                : "Svaret är registrerat – nästa uppgift kommer nu.";
+            document.getElementById("examMessage").textContent =
+                "Svar registrerat – nästa uppgift kommer nu.";
 
             window.setTimeout(() => {
                 currentIndex += 1;
