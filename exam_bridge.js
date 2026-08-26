@@ -389,8 +389,37 @@
                 return escapeHtml(step);
             };
 
+            const quantityHeading = quantity => {
+                const unit = quantity.trim().replace(/^[-+]?\d+(?:[.,]\d+)?\s*/, "").trim();
+                const normalized = unit.toLowerCase();
+                if (/^kg$|kilogram/.test(normalized)) return "Kroppsvikt (kg)";
+                if (/^m²$/.test(normalized)) return "Kroppsyta (m²)";
+                if (/^mg$|milligram/.test(normalized)) return "Dos (mg)";
+                if (/^µg$|mikrogram/.test(normalized)) return "Dos (µg)";
+                if (/^g$|gram/.test(normalized)) return "Mängd (g)";
+                if (/^e$|enhet/.test(normalized)) return "Dos (E)";
+                if (/^ml$|milliliter/.test(normalized)) return "Volym (mL)";
+                if (/^µl$|mikroliter/.test(normalized)) return "Volym (µL)";
+                if (/^l$|liter/.test(normalized)) return "Volym (L)";
+                if (/^min$|minut/.test(normalized)) return "Tid (min)";
+                if (/^h$|timme/.test(normalized)) return "Tid (h)";
+                if (/^bar$/.test(normalized)) return "Tryck (bar)";
+                if (/droppe|droppar/.test(normalized)) return "Antal droppar";
+                if (/tablett/.test(normalized)) return "Antal tabletter";
+                if (/inhalation/.test(normalized)) return "Antal inhalationer";
+                if (/mg\s*\/\s*ml/.test(normalized)) return "Styrka (mg/mL)";
+                if (/e\s*\/\s*ml/.test(normalized)) return "Styrka (E/mL)";
+                if (/mg\s*\/\s*kg/.test(normalized)) return "Dosering (mg/kg)";
+                if (/e\s*\/\s*kg/.test(normalized)) return "Dosering (E/kg)";
+                if (/mg\s*\/\s*m²/.test(normalized)) return "Dosering (mg/m²)";
+                if (/mg\s*\/\s*min/.test(normalized)) return "Doshastighet (mg/min)";
+                if (/ml\s*\/\s*min/.test(normalized)) return "Volymhastighet (mL/min)";
+                if (/l\s*\/\s*min/.test(normalized)) return "Syrgasflöde (L/min)";
+                return unit ? `Storhet (${escapeHtml(unit)})` : "Storhet";
+            };
+
             const tableHtml = (leftTop, rightTop, leftBottom, rightBottom) =>
-                `<table class="generic-proportion-table"><tr><th>Förhållande 1</th><th>Förhållande 2</th></tr>` +
+                `<table class="generic-proportion-table"><tr><th>${quantityHeading(leftTop)}</th><th>${quantityHeading(rightTop)}</th></tr>` +
                 `<tr><td>${escapeHtml(leftTop)}</td><td>${escapeHtml(rightTop)}</td></tr>` +
                 `<tr><td>${escapeHtml(leftBottom)}</td><td>${escapeHtml(rightBottom)}</td></tr></table>`;
 
