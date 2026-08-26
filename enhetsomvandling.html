@@ -45,6 +45,12 @@
       { from: "mmol", to: "mol", factor: 0.001 },
       { from: "mmol", to: "µmol", factor: 1000 },
       { from: "µmol", to: "mmol", factor: 0.001 }
+      ,{ from: "g", to: "µg", factor: 1000000 }
+      ,{ from: "µg", to: "g", factor: 0.000001 }
+      ,{ from: "L", to: "µL", factor: 1000000 }
+      ,{ from: "µL", to: "L", factor: 0.000001 }
+      ,{ from: "mol", to: "µmol", factor: 1000000 }
+      ,{ from: "µmol", to: "mol", factor: 0.000001 }
     ];
 
     let currentValue, currentConversion, correctAnswer, calculation;
@@ -66,9 +72,9 @@
       document.getElementById("userAnswer").placeholder = `Svar i ${currentConversion.to}`;
 
       if (currentConversion.factor > 1) {
-        calculation = `${formatNumber(currentValue)} ${currentConversion.from} × 1000 ${currentConversion.to}/1 ${currentConversion.from} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
+        calculation = `${formatNumber(currentValue)} ${currentConversion.from} × ${currentConversion.factor} ${currentConversion.to}/1 ${currentConversion.from} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
       } else {
-        calculation = `${formatNumber(currentValue)} ${currentConversion.from} × 1 ${currentConversion.to}/1000 ${currentConversion.from} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
+        calculation = `${formatNumber(currentValue)} ${currentConversion.from} × 1 ${currentConversion.to}/${Math.round(1 / currentConversion.factor)} ${currentConversion.from} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
       }
 
       document.getElementById("response").textContent = "";
