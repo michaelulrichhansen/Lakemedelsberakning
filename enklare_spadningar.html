@@ -13,7 +13,19 @@
         button { border-radius: 6px; padding: 8px 16px; border: none; background: #3b7; color: #fff; cursor: pointer; }
         #result { font-weight: bold; margin-top: 16px;}
         #calculation { color: #555; }
-        @media (max-width: 500px) { body { margin: 16px; } .card { max-width: none; padding: 20px; } h1 { font-size: 1.8rem; } label { display: block; } input[type="number"], input[type="text"] { width: 100%; box-sizing: border-box; } button { display: block; width: 100%; margin-top: 12px; } }
+        .method-chooser { display:none; margin-top:18px; }
+        .method-buttons { display:flex; flex-wrap:wrap; gap:8px; }
+        .method-button { margin-top:0; background:#fff; color:#195; border:2px solid #3b7; }
+        .method-button.active { background:#176b45; border-color:#176b45; color:#fff; }
+        .alternate-solution { display:none; color:#555; margin-top:18px; overflow-x:auto; line-height:1.6; }
+        .fraction { display:inline-flex; flex-direction:column; text-align:center; vertical-align:middle; margin:0 4px; }
+        .fraction .top { border-bottom:1px solid #444; padding:0 6px 2px; }
+        .fraction .bottom { padding:2px 6px 0; }
+        .cancel-unit { text-decoration:line-through; text-decoration-color:#b33; text-decoration-thickness:2px; }
+        .dilution-table { border-collapse:collapse; margin:8px 0 12px; min-width:300px; }
+        .dilution-table th, .dilution-table td { border:1px solid #aaa; padding:7px 10px; text-align:center; }
+        .dilution-table th { background:#f1f1f1; }
+        @media (max-width: 500px) { body { margin: 16px; } .card { max-width: none; padding: 20px; } h1 { font-size: 1.8rem; } label { display: block; } input[type="number"], input[type="text"] { width: 100%; box-sizing: border-box; } button { display: block; width: 100%; margin-top: 12px; } .method-buttons { display:grid; grid-template-columns:1fr; } .method-button, .dilution-table { width:100%; min-width:0; } }
     </style>
 </head>
 <body>
@@ -27,6 +39,15 @@
         <button onclick="checkAnswer()">Kontrollera svar</button>
         <p id="result" aria-live="polite"></p>
         <p id="calculation"></p>
+        <div id="methodChooser" class="method-chooser">
+            <div class="method-buttons" role="group" aria-label="Välj lösningsmetod">
+                <button id="formulaButton" class="method-button active" type="button" onclick="showSolutionMethod('formula')">✓ Formelmetoden</button>
+                <button id="dimensionButton" class="method-button" type="button" onclick="showSolutionMethod('dimension')">Dimensionsanalys</button>
+                <button id="proportionButton" class="method-button" type="button" onclick="showSolutionMethod('proportion')">Proportionsmetoden</button>
+            </div>
+            <div id="dimensionSolution" class="alternate-solution"></div>
+            <div id="proportionSolution" class="alternate-solution"></div>
+        </div>
         <p style="font-size:0.95em;color:#444;">Svara med ett heltal.</p>
         <p style="margin-top:24px;"><a href="index.html" target="_top" style="color:#1166cc;text-decoration:none;">← Till startsidan</a></p>
     </div>
@@ -45,8 +66,29 @@
 
         let originalStrength, targetStrength, originalVolume, finalVolume, diluentVolume;
         let questionType, correctAnswer, answerUnit, calculationText;
+        let dimensionSolution = "", proportionSolution = "";
 
         const pick = values => values[Math.floor(Math.random() * values.length)];
+
+        const fraction = (top, bottom) => `<span class="fraction"><span class="top">${top}</span><span class="bottom">${bottom}</span></span>`;
+        const dilutionTable = (beforeStrength, beforeVolume, afterStrength, afterVolume) =>
+            `<table class="dilution-table"><tr><th></th><th>Före spädning</th><th>Efter spädning</th></tr>` +
+            `<tr><th>Styrka</th><td>${beforeStrength}</td><td>${afterStrength}</td></tr>` +
+            `<tr><th>Volym</th><td>${beforeVolume}</td><td>${afterVolume}</td></tr></table>`;
+
+        function showSolutionMethod(method) {
+            document.getElementById("calculation").style.display = method === "formula" ? "block" : "none";
+            document.getElementById("dimensionSolution").style.display = method === "dimension" ? "block" : "none";
+            document.getElementById("proportionSolution").style.display = method === "proportion" ? "block" : "none";
+            ["formula", "dimension", "proportion"].forEach(name => {
+                const button = document.getElementById(`${name}Button`);
+                const active = name === method;
+                button.classList.toggle("active", active);
+                button.setAttribute("aria-pressed", active ? "true" : "false");
+                const label = name === "formula" ? "Formelmetoden" : name === "dimension" ? "Dimensionsanalys" : "Proportionsmetoden";
+                button.textContent = `${active ? "✓ " : ""}${label}`;
+            });
+        }
 
         function randomizeValues() {
             const pair = pick(concentrationPairs);
@@ -55,6 +97,7 @@
             originalVolume = pick(originalVolumes);
             finalVolume = originalVolume * (originalStrength / targetStrength);
             diluentVolume = finalVolume - originalVolume;
+            const totalDose = originalStrength * originalVolume;
             questionType = Math.floor(Math.random() * 4);
 
             if (questionType === 0) {
@@ -62,30 +105,40 @@
                 answerUnit = "mL spädningsvätska";
                 document.getElementById("question").textContent =
                     `Du har ${originalVolume} mL läkemedel med styrkan ${originalStrength} mg/mL. Läkemedlet ska spädas till styrkan ${targetStrength} mg/mL. Hur många mL spädningsvätska ska tillsättas?`;
-                calculationText = `Slutvolym: (${originalStrength} mg/mL × ${originalVolume} mL) ÷ ${targetStrength} mg/mL = ${finalVolume} mL. Spädningsvätska: ${finalVolume} mL − ${originalVolume} mL = ${correctAnswer} mL`;
+                calculationText = `${originalStrength} mg/mL × ${originalVolume} mL = ${totalDose} mg<br>${totalDose} mg ÷ ${targetStrength} mg/mL = ${finalVolume} mL<br>${finalVolume} mL − ${originalVolume} mL = ${correctAnswer} mL`;
+                dimensionSolution = `<strong>Dimensionsanalys</strong><div><strong>Steg 1:</strong> ${fraction(`${originalStrength} mg`, `1 <span class="cancel-unit">mL</span>`)} × ${originalVolume} <span class="cancel-unit">mL</span> = ${totalDose} mg</div><div><strong>Steg 2:</strong> ${totalDose} <span class="cancel-unit">mg</span> × ${fraction(`1 mL`, `${targetStrength} <span class="cancel-unit">mg</span>`)} = ${finalVolume} mL</div><div><strong>Steg 3:</strong> ${finalVolume} mL − ${originalVolume} mL = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL spädningsvätska</div>`;
+                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, `${originalVolume} mL`, `${targetStrength} mg/mL`, "x mL")}<div>${originalStrength} × ${originalVolume} = ${targetStrength} × x</div><div>x = ${originalStrength} × ${originalVolume} ÷ ${targetStrength} = ${finalVolume} mL slutvolym</div><div>${finalVolume} mL − ${originalVolume} mL = ${correctAnswer} mL spädningsvätska</div><div><strong>Svar:</strong> ${correctAnswer} mL spädningsvätska</div>`;
             } else if (questionType === 1) {
                 correctAnswer = finalVolume;
                 answerUnit = "mL slutvolym";
                 document.getElementById("question").textContent =
                     `Du har ${originalVolume} mL läkemedel med styrkan ${originalStrength} mg/mL. Läkemedlet ska spädas till styrkan ${targetStrength} mg/mL. Vilken blir den totala slutvolymen i mL?`;
-                calculationText = `(${originalStrength} mg/mL × ${originalVolume} mL) ÷ ${targetStrength} mg/mL = ${correctAnswer} mL`;
+                calculationText = `${originalStrength} mg/mL × ${originalVolume} mL = ${totalDose} mg<br>${totalDose} mg ÷ ${targetStrength} mg/mL = ${correctAnswer} mL`;
+                dimensionSolution = `<strong>Dimensionsanalys</strong><div><strong>Steg 1:</strong> ${fraction(`${originalStrength} mg`, `1 <span class="cancel-unit">mL</span>`)} × ${originalVolume} <span class="cancel-unit">mL</span> = ${totalDose} mg</div><div><strong>Steg 2:</strong> ${totalDose} <span class="cancel-unit">mg</span> × ${fraction(`1 mL`, `${targetStrength} <span class="cancel-unit">mg</span>`)} = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL</div>`;
+                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, `${originalVolume} mL`, `${targetStrength} mg/mL`, "x mL")}<div>${originalStrength} × ${originalVolume} = ${targetStrength} × x</div><div>x = ${originalStrength} × ${originalVolume} ÷ ${targetStrength} = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL</div>`;
             } else if (questionType === 2) {
                 correctAnswer = targetStrength;
                 answerUnit = "mg/mL";
                 document.getElementById("question").textContent =
                     `Du har ${originalVolume} mL läkemedel med styrkan ${originalStrength} mg/mL och tillsätter ${diluentVolume} mL spädningsvätska. Vilken styrka i mg/mL får den färdigspädda lösningen?`;
-                calculationText = `Slutvolym: ${originalVolume} mL + ${diluentVolume} mL = ${finalVolume} mL. (${originalStrength} mg/mL × ${originalVolume} mL) ÷ ${finalVolume} mL = ${correctAnswer} mg/mL`;
+                calculationText = `${originalVolume} mL + ${diluentVolume} mL = ${finalVolume} mL<br>${originalStrength} mg/mL × ${originalVolume} mL = ${totalDose} mg<br>${totalDose} mg ÷ ${finalVolume} mL = ${correctAnswer} mg/mL`;
+                dimensionSolution = `<strong>Dimensionsanalys</strong><div><strong>Steg 1:</strong> ${originalVolume} mL + ${diluentVolume} mL = ${finalVolume} mL</div><div><strong>Steg 2:</strong> ${fraction(`${originalStrength} mg`, `1 <span class="cancel-unit">mL</span>`)} × ${originalVolume} <span class="cancel-unit">mL</span> = ${totalDose} mg</div><div><strong>Steg 3:</strong> ${totalDose} mg × ${fraction(`1`, `${finalVolume} mL`)} = ${correctAnswer} mg/mL</div><div><strong>Svar:</strong> ${correctAnswer} mg/mL</div>`;
+                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, `${originalVolume} mL`, "x mg/mL", `${finalVolume} mL`)}<div>${originalStrength} × ${originalVolume} = x × ${finalVolume}</div><div>x = ${originalStrength} × ${originalVolume} ÷ ${finalVolume} = ${correctAnswer} mg/mL</div><div><strong>Svar:</strong> ${correctAnswer} mg/mL</div>`;
             } else {
                 correctAnswer = originalVolume;
                 answerUnit = "mL läkemedel";
                 document.getElementById("question").textContent =
                     `Du ska bereda ${finalVolume} mL lösning med styrkan ${targetStrength} mg/mL. Det koncentrerade läkemedlet har styrkan ${originalStrength} mg/mL. Hur många mL av det koncentrerade läkemedlet behövs?`;
-                calculationText = `(${targetStrength} mg/mL × ${finalVolume} mL) ÷ ${originalStrength} mg/mL = ${correctAnswer} mL`;
+                const requiredDose = targetStrength * finalVolume;
+                calculationText = `${targetStrength} mg/mL × ${finalVolume} mL = ${requiredDose} mg<br>${requiredDose} mg ÷ ${originalStrength} mg/mL = ${correctAnswer} mL`;
+                dimensionSolution = `<strong>Dimensionsanalys</strong><div><strong>Steg 1:</strong> ${fraction(`${targetStrength} mg`, `1 <span class="cancel-unit">mL</span>`)} × ${finalVolume} <span class="cancel-unit">mL</span> = ${requiredDose} mg</div><div><strong>Steg 2:</strong> ${requiredDose} <span class="cancel-unit">mg</span> × ${fraction(`1 mL`, `${originalStrength} <span class="cancel-unit">mg</span>`)} = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL</div>`;
+                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, "x mL", `${targetStrength} mg/mL`, `${finalVolume} mL`)}<div>${originalStrength} × x = ${targetStrength} × ${finalVolume}</div><div>x = ${targetStrength} × ${finalVolume} ÷ ${originalStrength} = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL</div>`;
             }
 
             document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit} (heltal):`;
             document.getElementById("result").textContent = "";
             document.getElementById("calculation").textContent = "";
+            document.getElementById("methodChooser").style.display = "none";
             document.getElementById("answer").value = "";
         }
 
@@ -97,6 +150,7 @@
                 document.getElementById("result").textContent = "Skriv ett giltigt tal.";
                 document.getElementById("result").style.color = "#a33";
                 document.getElementById("calculation").textContent = "";
+                document.getElementById("methodChooser").style.display = "none";
                 return;
             }
 
@@ -108,7 +162,11 @@
                 document.getElementById("result").style.color = "#a33";
             }
 
-            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
+            document.getElementById("calculation").innerHTML = `<strong>Beräkning:</strong><br>${calculationText}`;
+            document.getElementById("dimensionSolution").innerHTML = dimensionSolution;
+            document.getElementById("proportionSolution").innerHTML = proportionSolution;
+            document.getElementById("methodChooser").style.display = "block";
+            showSolutionMethod("formula");
         }
 
         document.getElementById("answer").addEventListener("keydown", event => {
@@ -117,6 +175,6 @@
 
         window.onload = randomizeValues;
     </script>
-<script src="exam_bridge.js?v=20260826-7"></script>
+<script src="exam_bridge.js?v=20260826-8"></script>
 </body>
 </html>
