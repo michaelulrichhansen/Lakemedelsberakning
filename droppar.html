@@ -34,6 +34,7 @@
         const dropsPerMlValues = [15, 20, 25];
         const doseVolumes = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5];
         const bottleVolumes = [10, 15, 20, 30];
+        const strengths = [0.5, 0.8, 1, 1.5, 2, 2.5, 5, 10];
         const medicationCases = [
             { drops: 20, dropsPerMl: 16, strength: 0.8 },
             { drops: 18, dropsPerMl: 20, strength: 2 },
@@ -44,8 +45,8 @@
             { drops: 25, dropsPerMl: 20, strength: 0.8 }
         ];
 
-        let dropsPerMl, doseVolume, dropsPerDose, bottleVolume, numberOfDoses;
         let questionType, correctAnswer, answerUnit, calculationText;
+        let nextQuestionType = Math.floor(Math.random() * 6);
 
         const pick = values => values[Math.floor(Math.random() * values.length)];
 
@@ -53,35 +54,83 @@
             return Number(value.toFixed(2)).toString().replace(".", ",");
         }
 
-        function createConsistentValues() {
-            do {
-                dropsPerMl = pick(dropsPerMlValues);
-                doseVolume = pick(doseVolumes);
-                bottleVolume = pick(bottleVolumes);
-                dropsPerDose = dropsPerMl * doseVolume;
-                numberOfDoses = bottleVolume / doseVolume;
-            } while (!Number.isInteger(dropsPerDose) || !Number.isInteger(numberOfDoses));
-        }
-
         function randomizeValues() {
-            randomizeMedicationCase();
-        }
+            questionType = nextQuestionType;
+            nextQuestionType = (nextQuestionType + 1) % 6;
 
-        function randomizeMedicationCase() {
-            const currentCase = pick(medicationCases);
-            const volumeMl = currentCase.drops / currentCase.dropsPerMl;
-            const doseMg = volumeMl * currentCase.strength;
+            const dropsPerMl = pick(dropsPerMlValues);
+            const doseVolume = pick(doseVolumes);
+            const drops = dropsPerMl * doseVolume;
+            let problemText;
 
-            correctAnswer = doseMg;
-            answerUnit = "mg";
-            calculationText =
-                `${currentCase.drops} droppar ÷ ${currentCase.dropsPerMl} droppar/mL = ${formatNumber(volumeMl)} mL<br>` +
-                `${formatNumber(volumeMl)} mL × ${formatNumber(currentCase.strength)} mg/mL = ${formatNumber(doseMg)} mg`;
+            if (questionType === 0) {
+                correctAnswer = drops;
+                answerUnit = "droppar";
+                problemText =
+                    `En patient ska få ${formatNumber(doseVolume)} mL av ett flytande läkemedel. ` +
+                    `Enligt flaskans anvisning motsvarar 1 mL ${dropsPerMl} droppar. Hur många droppar ska ges?`;
+                calculationText =
+                    `${formatNumber(doseVolume)} mL × ${dropsPerMl} droppar/mL = ${formatNumber(correctAnswer)} droppar`;
+            } else if (questionType === 1) {
+                correctAnswer = doseVolume;
+                answerUnit = "mL";
+                problemText =
+                    `En patient har fått ${drops} droppar av ett flytande läkemedel. ` +
+                    `Enligt flaskans anvisning motsvarar 1 mL ${dropsPerMl} droppar. Hur många mL har patienten fått?`;
+                calculationText =
+                    `${drops} droppar ÷ ${dropsPerMl} droppar/mL = ${formatNumber(correctAnswer)} mL`;
+            } else if (questionType === 2) {
+                const currentCase = pick(medicationCases);
+                const volumeMl = currentCase.drops / currentCase.dropsPerMl;
+                const doseMg = volumeMl * currentCase.strength;
+                correctAnswer = doseMg;
+                answerUnit = "mg";
+                problemText =
+                    `En patient får ${currentCase.drops} droppar av ett läkemedel med styrkan ${formatNumber(currentCase.strength)} mg/mL. ` +
+                    `Enligt flaskans anvisning motsvarar 1 mL ${currentCase.dropsPerMl} droppar. Hur många mg läkemedel har patienten fått?`;
+                calculationText =
+                    `${currentCase.drops} droppar ÷ ${currentCase.dropsPerMl} droppar/mL = ${formatNumber(volumeMl)} mL<br>` +
+                    `${formatNumber(volumeMl)} mL × ${formatNumber(currentCase.strength)} mg/mL = ${formatNumber(correctAnswer)} mg`;
+            } else if (questionType === 3) {
+                const strength = pick(strengths);
+                const prescribedDose = strength * doseVolume;
+                correctAnswer = drops;
+                answerUnit = "droppar";
+                problemText =
+                    `En patient är ordinerad ${formatNumber(prescribedDose)} mg av ett läkemedel med styrkan ${formatNumber(strength)} mg/mL. ` +
+                    `Enligt flaskans anvisning motsvarar 1 mL ${dropsPerMl} droppar. Hur många droppar ska patienten få?`;
+                calculationText =
+                    `${formatNumber(prescribedDose)} mg ÷ ${formatNumber(strength)} mg/mL = ${formatNumber(doseVolume)} mL<br>` +
+                    `${formatNumber(doseVolume)} mL × ${dropsPerMl} droppar/mL = ${formatNumber(correctAnswer)} droppar`;
+            } else if (questionType === 4) {
+                let bottleVolume;
+                do {
+                    bottleVolume = pick(bottleVolumes);
+                } while (!Number.isInteger(bottleVolume / doseVolume));
+                const numberOfDoses = bottleVolume / doseVolume;
+                correctAnswer = numberOfDoses;
+                answerUnit = "doser";
+                problemText =
+                    `En flaska innehåller ${bottleVolume} mL läkemedel. En dos består av ${drops} droppar och enligt flaskans anvisning ` +
+                    `motsvarar 1 mL ${dropsPerMl} droppar. Till hur många hela doser räcker flaskan?`;
+                calculationText =
+                    `${drops} droppar/dos ÷ ${dropsPerMl} droppar/mL = ${formatNumber(doseVolume)} mL/dos<br>` +
+                    `${bottleVolume} mL ÷ ${formatNumber(doseVolume)} mL/dos = ${formatNumber(correctAnswer)} doser`;
+            } else {
+                const strength = pick(strengths);
+                const administeredDose = strength * doseVolume;
+                correctAnswer = strength;
+                answerUnit = "mg/mL";
+                problemText =
+                    `En patient har fått ${drops} droppar, vilket motsvarar en dos på ${formatNumber(administeredDose)} mg. ` +
+                    `Enligt flaskans anvisning motsvarar 1 mL ${dropsPerMl} droppar. Vilken styrka i mg/mL har läkemedlet?`;
+                calculationText =
+                    `${drops} droppar ÷ ${dropsPerMl} droppar/mL = ${formatNumber(doseVolume)} mL<br>` +
+                    `${formatNumber(administeredDose)} mg ÷ ${formatNumber(doseVolume)} mL = ${formatNumber(correctAnswer)} mg/mL`;
+            }
 
-            document.getElementById("problem").textContent =
-                `En patient ordineras ${currentCase.drops} ögondroppar med styrkan ${formatNumber(currentCase.strength)} mg/mL. ` +
-                `Enligt flaskans anvisning motsvarar 1 mL ${currentCase.dropsPerMl} droppar. Hur många mg läkemedel har patienten fått?`;
-            document.getElementById("answerLabel").textContent = "Ange ditt svar i mg:";
+            document.getElementById("problem").textContent = problemText;
+            document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit}:`;
             document.getElementById("answer").value = "";
             document.getElementById("result").textContent = "";
             document.getElementById("calculation").innerHTML = "";
