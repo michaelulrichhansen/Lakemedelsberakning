@@ -291,7 +291,9 @@
 
                 const lastStep = steps[steps.length - 1];
                 let answer = lastStep;
-                if (/^alltså/i.test(lastStep)) {
+                if (/^avrundat till/i.test(lastStep) && lastStep.includes(":")) {
+                    answer = lastStep.slice(lastStep.indexOf(":") + 1).trim();
+                } else if (/^alltså/i.test(lastStep)) {
                     answer = lastStep.replace(/^alltså\s*/i, "");
                 } else {
                     const approximateIndex = lastStep.lastIndexOf("≈");

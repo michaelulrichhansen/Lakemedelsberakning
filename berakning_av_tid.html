@@ -45,6 +45,11 @@
             return Number(value.toFixed(2)).toString().replace(".", ",");
         }
 
+        function formatUnrounded(value) {
+            const truncated = Math.trunc(value * 1000) / 1000;
+            return truncated.toFixed(3).replace(".", ",") + "…";
+        }
+
         function generateProblem() {
             const caseType = nextCaseType;
             nextCaseType = (nextCaseType + 1) % 5;
@@ -85,7 +90,8 @@
                 const unroundedHours = minutes / 60;
                 correctAnswer = Math.round((unroundedHours + Number.EPSILON) * 100) / 100;
                 answerUnit = "timmar";
-                calcText = `${minutes} minuter × 1 timme/60 minuter = ${formatNumber(unroundedHours)} timmar`;
+                calcText = `${minutes} minuter × 1 timme/60 minuter = ${formatUnrounded(unroundedHours)} timmar<br>` +
+                    `Avrundat till två decimaler: ${formatNumber(correctAnswer)} timmar`;
                 document.getElementById("problem").textContent =
                     `${minutes} minuter ska uttryckas i timmar som decimaltal. Hur många timmar motsvarar detta? Avrunda till två decimaler.`;
             }
