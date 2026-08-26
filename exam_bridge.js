@@ -92,9 +92,6 @@
                 }
                 .generic-method-button.active { background: #176b45; border-color: #176b45; color: #fff; }
                 .generic-method-panel { display: none; color: #555; margin-top: 16px; line-height: 1.6; overflow-x: auto; }
-                .method-help { margin: 12px 0 0; padding: 12px; background: #f3f8f5; border-left: 4px solid #3b7; border-radius: 4px; }
-                .method-help p { margin: 5px 0; }
-                .method-help-toggle { margin-top: 10px; color: #176b45; background: transparent; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
                 .generic-proportion-table { border-collapse: collapse; margin: 6px 0 10px; min-width: 250px; }
                 .generic-proportion-table th, .generic-proportion-table td {
                     border: 1px solid #aaa; padding: 6px 10px; text-align: center;
@@ -475,42 +472,9 @@
                 return null;
             };
 
-            const attachMethodHelp = chooser => {
-                if (!chooser || chooser.querySelector(".method-help-toggle")) return;
-                const buttons = chooser.querySelector(".generic-method-buttons, .method-buttons");
-                if (!buttons) return;
-                const help = document.createElement("div");
-                help.className = "method-help";
-                help.innerHTML = `<strong>Så fungerar metoderna</strong>` +
-                    `<p><strong>Formelmetoden:</strong> välj rätt formel och sätt in uppgiftens värden.</p>` +
-                    `<p><strong>Dimensionsanalys:</strong> multiplicera med omvandlingsfaktorer och kontrollera vilka enheter som förkortas bort.</p>` +
-                    `<p><strong>Proportionsmetoden:</strong> placera motsvarande storheter i samma kolumn och lös ut x genom korsmultiplikation.</p>` +
-                    `<p>Endast de metoder som passar den aktuella uppgiften visas.</p>`;
-                let seen = false;
-                try { seen = window.localStorage.getItem("solutionMethodHelpSeen") === "yes"; } catch (_) {}
-                help.style.display = seen ? "none" : "block";
-                const toggle = document.createElement("button");
-                toggle.type = "button";
-                toggle.className = "method-help-toggle";
-                toggle.textContent = seen ? "Vad innebär metoderna?" : "Dölj metodförklaringen";
-                toggle.addEventListener("click", () => {
-                    const willShow = help.style.display === "none";
-                    help.style.display = willShow ? "block" : "none";
-                    toggle.textContent = willShow ? "Dölj metodförklaringen" : "Vad innebär metoderna?";
-                    if (!willShow) {
-                        try { window.localStorage.setItem("solutionMethodHelpSeen", "yes"); } catch (_) {}
-                    }
-                });
-                buttons.insertAdjacentElement("afterend", help);
-                help.insertAdjacentElement("afterend", toggle);
-            };
-
             const addMethodChooser = (steps, answer) => {
                 const customChooser = document.getElementById("methodChooser");
-                if (customChooser) {
-                    attachMethodHelp(customChooser);
-                    return;
-                }
+                if (customChooser) return;
                 if (/avrundningsregler/i.test(document.title)) return;
                 document.getElementById("genericMethodChooser")?.remove();
 
@@ -548,7 +512,6 @@
                 chooser.querySelectorAll("[data-method]").forEach(button =>
                     button.addEventListener("click", () => selectMethod(button.dataset.method)));
                 calculationElement.insertAdjacentElement("afterend", chooser);
-                attachMethodHelp(chooser);
             };
 
             const formatCalculation = () => {
