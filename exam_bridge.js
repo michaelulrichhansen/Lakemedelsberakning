@@ -257,7 +257,13 @@
                 const numeratorRendered = leftRendered.matched
                     ? { html: escapeHtml(numeratorText), matched: false }
                     : cancelFirstMatchingUnit(numeratorText, unitGroup);
-                const denominatorRendered = cancelFirstMatchingUnit(denominatorText, unitGroup);
+                // Stryk nämnaren endast när samma enhet verkligen har hittats
+                // på vänster sida eller i täljarfaktorn. Resultatets enhet får
+                // aldrig användas som skäl för att förkorta enheten.
+                const hasCancellablePair = leftRendered.matched || numeratorRendered.matched;
+                const denominatorRendered = hasCancellablePair
+                    ? cancelFirstMatchingUnit(denominatorText, unitGroup)
+                    : { html: escapeHtml(denominatorText), matched: false };
 
                 const expression = document.createElement("span");
                 expression.innerHTML = `${leftRendered.html} × ` +

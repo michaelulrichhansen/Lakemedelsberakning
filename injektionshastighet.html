@@ -44,7 +44,9 @@
         const pick = values => values[Math.floor(Math.random() * values.length)];
 
         function formatNumber(value, maxDecimals = 2) {
-            return Number(value.toFixed(maxDecimals)).toString().replace(".", ",");
+            const factor = 10 ** maxDecimals;
+            const rounded = Math.round((value + Number.EPSILON) * factor) / factor;
+            return rounded.toString().replace(".", ",");
         }
 
         function randomizeCase() {
@@ -63,20 +65,20 @@
                 correctAnswer = volumePerMinute * time;
                 answerUnit = "mL";
                 problemText = `En patient ska få en injektionshastighet på <strong>${formatNumber(rate)} mg/minut</strong>. Läkemedlet kommer i en styrka på <strong>${formatNumber(strength)} mg/mL</strong>. Efter <strong>${time} minuter</strong>, hur många <strong>mL</strong> av läkemedlet har patienten fått?`;
-                calcText = `Steg 1: ${formatNumber(rate)} mg/min × 1 mL/${formatNumber(strength)} mg = ${formatNumber(volumePerMinute, 4)} mL/min<br>Steg 2: ${formatNumber(volumePerMinute, 4)} mL/min × ${time} min = ${formatNumber(correctAnswer)} mL`;
+                calcText = `${formatNumber(rate)} mg/min × 1 mL/${formatNumber(strength)} mg = ${formatNumber(volumePerMinute, 4)} mL/min<br>${formatNumber(volumePerMinute, 4)} mL/min × ${time} min = ${formatNumber(correctAnswer)} mL`;
             } else if (type === 1) {
                 // mg/min + mg/mL -> mL/min
                 correctAnswer = rate / strength;
                 answerUnit = "mL/min";
                 problemText = `Ett läkemedel ordineras med doshastigheten <strong>${formatNumber(rate)} mg/minut</strong>. Läkemedlets styrka är <strong>${formatNumber(strength)} mg/mL</strong>. Vilken volymhastighet ska användas, uttryckt i <strong>mL/minut</strong>?`;
-                calcText = `Steg 1: ${formatNumber(rate)} mg/min × 1 mL/${formatNumber(strength)} mg = ${formatNumber(correctAnswer)} mL/min`;
+                calcText = `${formatNumber(rate)} mg/min × 1 mL/${formatNumber(strength)} mg = ${formatNumber(correctAnswer)} mL/min`;
             } else if (type === 2) {
                 // mL/min + mg/mL -> mg/min
                 const volumeRate = rate / strength;
                 correctAnswer = volumeRate * strength;
                 answerUnit = "mg/min";
                 problemText = `Ett läkemedel med styrkan <strong>${formatNumber(strength)} mg/mL</strong> ges med volymhastigheten <strong>${formatNumber(volumeRate, 4)} mL/minut</strong>. Hur många <strong>mg/minut</strong> får patienten?`;
-                calcText = `Steg 1: ${formatNumber(volumeRate, 4)} mL/min × ${formatNumber(strength)} mg/1 mL = ${formatNumber(correctAnswer)} mg/min`;
+                calcText = `${formatNumber(volumeRate, 4)} mL/min × ${formatNumber(strength)} mg/1 mL = ${formatNumber(correctAnswer)} mg/min`;
             } else if (type === 3) {
                 // total mL + mg/mL + tid -> mg/min
                 const time = pick(timesMin);
@@ -85,7 +87,7 @@
                 correctAnswer = totalDose / time;
                 answerUnit = "mg/min";
                 problemText = `Under <strong>${time} minuter</strong> har en patient fått <strong>${formatNumber(totalVolume)} mL</strong> av ett läkemedel med styrkan <strong>${formatNumber(strength)} mg/mL</strong>. Vilken injektionshastighet i <strong>mg/minut</strong> motsvarar detta?`;
-                calcText = `Steg 1: ${formatNumber(totalVolume)} mL × ${formatNumber(strength)} mg/1 mL = ${formatNumber(totalDose)} mg<br>Steg 2: ${formatNumber(totalDose)} mg × 1/${time} min = ${formatNumber(correctAnswer)} mg/min`;
+                calcText = `${formatNumber(totalVolume)} mL × ${formatNumber(strength)} mg/1 mL = ${formatNumber(totalDose)} mg<br>${formatNumber(totalDose)} mg × 1/${time} min = ${formatNumber(correctAnswer)} mg/min`;
             } else {
                 // total mL + tid -> mL/min
                 const time = pick(timesMin);
@@ -94,7 +96,7 @@
                 correctAnswer = totalVolume / time;
                 answerUnit = "mL/min";
                 problemText = `En patient har fått <strong>${formatNumber(totalVolume)} mL</strong> läkemedel under <strong>${time} minuter</strong>. Vilken volymhastighet i <strong>mL/minut</strong> har använts?`;
-                calcText = `Steg 1: ${formatNumber(totalVolume)} mL × 1/${time} min = ${formatNumber(correctAnswer)} mL/min`;
+                calcText = `${formatNumber(totalVolume)} mL × 1/${time} min = ${formatNumber(correctAnswer)} mL/min`;
             }
 
             document.getElementById("problem").innerHTML = problemText;
