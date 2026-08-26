@@ -291,7 +291,9 @@
 
                 const steps = plainText
                     .split(/\n+|\.\s+(?=[A-ZÅÄÖ0-9(])/)
-                    .map(step => step.trim().replace(/\.$/, ""))
+                    // Äldre facit kan redan börja med "Steg 1:". Ta bort den
+                    // märkningen innan den gemensamma numreringen läggs till.
+                    .map(step => step.trim().replace(/^Steg\s+\d+:\s*/i, "").replace(/\.$/, ""))
                     .filter(Boolean);
                 if (steps.length === 0) return;
 
