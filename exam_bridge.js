@@ -51,6 +51,37 @@
                     font-family: Arial, sans-serif;
                     font-weight: 600 !important;
                 }
+                .dimensional-fraction {
+                    display: inline-grid;
+                    grid-template-rows: auto auto;
+                    vertical-align: middle;
+                    margin: 0 .25em;
+                    text-align: center;
+                    line-height: 1.2;
+                }
+                .dimensional-numerator {
+                    border-bottom: 1.5px solid currentColor;
+                    padding: 0 .25em .12em;
+                }
+                .dimensional-denominator {
+                    padding: .12em .25em 0;
+                }
+                .cancelled-unit {
+                    text-decoration: line-through;
+                    text-decoration-thickness: 1.5px;
+                    text-decoration-color: #a33;
+                }
+                .visually-hidden {
+                    position: absolute;
+                    width: 1px;
+                    height: 1px;
+                    padding: 0;
+                    margin: -1px;
+                    overflow: hidden;
+                    clip: rect(0, 0, 0, 0);
+                    white-space: nowrap;
+                    border: 0;
+                }
             `;
             document.head.appendChild(typographyStyle);
         }
@@ -181,6 +212,63 @@
         if (calculationElement && typeof document.createElement === "function") {
             let calculationTimer;
 
+            const unitGroups = [
+                ["mikrogram", "µg"], ["milligram", "mg"], ["mikroliter", "µL"], ["milliliter", "mL"],
+                ["mikromol", "µmol"], ["millimol", "mmol"], ["mol"],
+                ["timme", "timmar", "h"], ["minut", "minuter", "min"],
+                ["liter", "L"], ["gram", "g"], ["kilogram", "kg"], ["bar"], ["m²"]
+            ];
+
+            const escapeHtml = value => value.replace(/[&<>"']/g, character => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            })[character]);
+
+            const findUnitGroup = denominator => {
+                const denominatorUnit = denominator.replace(/^\s*[-+]?\d+(?:[.,]\d+)?\s*/, "").trim();
+                return unitGroups.find(group => group.some(unit => denominatorUnit === unit)) || null;
+            };
+
+            const cancelFirstMatchingUnit = (text, group) => {
+                if (!group) return { html: escapeHtml(text), matched: false };
+                const sortedUnits = [...group].sort((a, b) => b.length - a.length);
+                const escapedUnits = sortedUnits.map(unit => unit.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+                const pattern = new RegExp(`(^|[^A-Za-zÅÄÖåäöµ])(${escapedUnits.join("|")})(?=$|[^A-Za-zÅÄÖåäöµ])`, "i");
+                const match = text.match(pattern);
+                if (!match) return { html: escapeHtml(text), matched: false };
+                const unitStart = match.index + match[1].length;
+                return {
+                    html: escapeHtml(text.slice(0, unitStart)) +
+                        `<span class="cancelled-unit">${escapeHtml(text.slice(unitStart, unitStart + match[2].length))}</span>` +
+                        escapeHtml(text.slice(unitStart + match[2].length)),
+                    matched: true
+                };
+            };
+
+            const renderStepExpression = (row, step) => {
+                const factorMatch = step.match(/^(.*?)\s+×\s+(.+?)\/(\s*[-+]?\d+(?:[.,]\d+)?\s+[A-Za-zÅÄÖåäöµ²]+)\s*=\s*(.+)$/);
+                if (!factorMatch) {
+                    row.appendChild(document.createTextNode(step));
+                    return;
+                }
+
+                const [, leftSide, numeratorText, denominatorText, resultText] = factorMatch;
+                const unitGroup = findUnitGroup(denominatorText);
+                const leftRendered = cancelFirstMatchingUnit(leftSide, unitGroup);
+                const numeratorRendered = leftRendered.matched
+                    ? { html: escapeHtml(numeratorText), matched: false }
+                    : cancelFirstMatchingUnit(numeratorText, unitGroup);
+                const denominatorRendered = cancelFirstMatchingUnit(denominatorText, unitGroup);
+
+                const expression = document.createElement("span");
+                expression.innerHTML = `${leftRendered.html} × ` +
+                    `<span class="dimensional-fraction">` +
+                    `<span class="dimensional-numerator">${numeratorRendered.html}</span>` +
+                    `<span class="visually-hidden"> delat med </span>` +
+                    `<span class="dimensional-denominator">${denominatorRendered.html}</span>` +
+                    `</span> = ${escapeHtml(resultText)}`;
+                row.appendChild(expression);
+            };
+
             const formatCalculation = () => {
                 if (!calculationElement.textContent.trim() || calculationElement.querySelector(".calculation-steps")) return;
 
@@ -190,6 +278,7 @@
                 const holder = document.createElement("div");
                 holder.innerHTML = source;
                 const plainText = holder.textContent
+                    .replace(/<br\s*\/?>/gi, "\n")
                     .replace(/^\s*Beräkning:\s*/i, "")
                     .trim();
                 if (!plainText) return;
@@ -219,7 +308,8 @@
                     const row = document.createElement("div");
                     const label = document.createElement("strong");
                     label.textContent = `Steg ${index + 1}: `;
-                    row.append(label, document.createTextNode(step));
+                    row.appendChild(label);
+                    renderStepExpression(row, step);
                     wrapper.appendChild(row);
                 });
 

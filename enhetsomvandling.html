@@ -66,9 +66,9 @@
       document.getElementById("userAnswer").placeholder = `Svar i ${currentConversion.to}`;
 
       if (currentConversion.factor > 1) {
-        calculation = `${formatNumber(currentValue)} ${currentConversion.from} × 1000 ${currentConversion.to}/${currentConversion.from} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
+        calculation = `${formatNumber(currentValue)} ${currentConversion.from} × 1000 ${currentConversion.to}/1 ${currentConversion.from} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
       } else {
-        calculation = `${formatNumber(currentValue)} ${currentConversion.from} ÷ 1000 ${currentConversion.from}/${currentConversion.to} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
+        calculation = `${formatNumber(currentValue)} ${currentConversion.from} × 1 ${currentConversion.to}/1000 ${currentConversion.from} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
       }
 
       document.getElementById("response").textContent = "";
