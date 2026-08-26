@@ -120,7 +120,7 @@
         const randomizeButtonForVariation = Array.from(document.querySelectorAll("button"))
             .find(button => button.textContent.trim().toLowerCase() === "slumpa värden");
 
-        if (!examMode && questionElement && randomizeButtonForVariation && window.sessionStorage) {
+        if (!examMode && !params.has("kvalitetskontroll") && questionElement && randomizeButtonForVariation && window.sessionStorage) {
             const storagePrefix = `medicationPractice:${window.location.pathname}:`;
             let rerollAttempts = 0;
             let variationTimer;

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kvalitetskontroll – Läkemedelsberäkning</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f7f7f7; color: #222; }
+        main { background: #fff; max-width: 900px; margin: 40px auto; padding: 30px 34px; border-radius: 16px; box-shadow: 0 6px 24px #0001; }
+        h1, h2 { color: #195; }
+        .controls { display: flex; flex-wrap: wrap; align-items: end; gap: 14px; margin: 24px 0; }
+        label { display: grid; gap: 6px; font-weight: bold; }
+        select, button { font: inherit; border-radius: 6px; padding: 9px 14px; }
+        select { border: 1px solid #aaa; background: #fff; }
+        button { border: 0; background: #3b7; color: #fff; cursor: pointer; }
+        button:disabled { opacity: .55; cursor: wait; }
+        progress { width: 100%; height: 18px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; vertical-align: top; }
+        th { background: #f2f2f2; }
+        .pass { color: #087a42; font-weight: bold; }
+        .fail { color: #b42318; font-weight: bold; }
+        #summary { font-size: 1.1rem; font-weight: bold; margin-top: 16px; }
+        #testFrame { position: fixed; width: 1px; height: 1px; left: -10000px; border: 0; }
+        .back-link { color: #1166cc; text-decoration: none; }
+        @media (max-width: 650px) {
+            main { margin: 16px; padding: 22px 18px; }
+            table { font-size: .88rem; }
+            th, td { padding: 7px 5px; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <nav aria-label="Du är här"><a class="back-link" href="index.html">Startsida</a> <span aria-hidden="true">›</span> Kvalitetskontroll</nav>
+    <h1>Automatisk kvalitetskontroll</h1>
+    <p>Kontrollen slumpar uppgifter inom samtliga områden och granskar uppgiftstext, enheter, facit, avrundning och automatisk rättning. Inga uppgifter eller resultat skickas från webbläsaren.</p>
+
+    <div class="controls">
+        <label for="runsPerArea">Antal uppgifter per område
+            <select id="runsPerArea">
+                <option value="25">25 – snabb kontroll</option>
+                <option value="100" selected>100 – rekommenderad</option>
+                <option value="250">250 – grundlig kontroll</option>
+            </select>
+        </label>
+        <button id="runButton" type="button">Starta kvalitetskontroll</button>
+    </div>
+
+    <progress id="progress" value="0" max="1"></progress>
+    <p id="status" aria-live="polite">Kontrollen har inte startats.</p>
+    <p id="summary" aria-live="polite"></p>
+
+    <table>
+        <thead><tr><th>Område</th><th>Kontrollerade</th><th>Resultat</th><th>Detaljer</th></tr></thead>
+        <tbody id="resultsBody"></tbody>
+    </table>
+
+    <iframe id="testFrame" title="Dold testyta"></iframe>
+    <p style="margin-top:26px;color:#777;font-size:.85rem;text-align:center;">Senast uppdaterad augusti 2026</p>
+</main>
+
+<script>
+    const pages = [
+        ["dos_styrka_och_mangd.html", "Dos, styrka och mängd"],
+        ["avrundningsregler.html", "Avrundningsregler"],
+        ["enhetsomvandling.html", "Enhetsomvandling"],
+        ["kroppsvikt.html", "Kroppsvikt"],
+        ["kroppsyta.html", "Kroppsyta"],
+        ["inhalationer.html", "Inhalationer"],
+        ["droppar.html", "Droppar"],
+        ["depotplaster.html", "Depotplåster"],
+        ["berakning_av_tid.html", "Omvandling av tid"],
+        ["dropphastighet.html", "Infusions- och dropphastighet"],
+        ["injektionshastighet.html", "Injektionshastighet"],
+        ["enklare_spadningar.html", "Enklare spädningar"],
+        ["syrgas.html", "Syrgas"],
+        ["procentrakning.html", "Procenträkning"]
+    ];
+
+    const badTextPattern = /\b(?:NaN|undefined|null|Infinity)\b/i;
+    const frame = document.getElementById("testFrame");
+    const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+
+    function loadPage(file) {
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error("Sidan kunde inte laddas inom tio sekunder.")), 10000);
+            frame.onload = () => {
+                clearTimeout(timeout);
+                resolve(frame.contentDocument);
+            };
+            frame.src = `${file}?kvalitetskontroll=${Date.now()}`;
+        });
+    }
+
+    function findButton(documentRef, text) {
+        return [...documentRef.querySelectorAll("button")]
+            .find(button => button.textContent.trim().toLowerCase() === text);
+    }
+
+    function getElements(documentRef) {
+        return {
+            problem: documentRef.getElementById("problem") || documentRef.getElementById("problemText") || documentRef.getElementById("question") || documentRef.querySelector(".problem"),
+            answer: documentRef.querySelector("input[type='text'], input[type='number']"),
+            label: documentRef.getElementById("answerLabel") || documentRef.querySelector("label"),
+            result: documentRef.getElementById("result") || documentRef.getElementById("response"),
+            calculation: documentRef.getElementById("calculation") || documentRef.getElementById("conversionSteps"),
+            randomize: findButton(documentRef, "slumpa värden"),
+            check: findButton(documentRef, "kontrollera svar")
+        };
+    }
+
+    function answerFromFacit(resultText, calculationText) {
+        const feedbackMatch = resultText.match(/Rätt svar är\s+(.+?)[.]?$/i);
+        if (feedbackMatch) {
+            const feedbackAnswer = feedbackMatch[1].trim();
+            if (/\b(?:flaska|ja|nej)\b/i.test(feedbackAnswer)) return feedbackAnswer;
+            const feedbackNumber = feedbackAnswer.match(/[-+]?\d+(?:[.,]\d+)?/);
+            if (feedbackNumber) return feedbackNumber[0];
+        }
+
+        const text = calculationText;
+        const answerMatch = text.match(/Svar:\s*([^\n]+)/i);
+        const source = answerMatch ? answerMatch[1].trim() : text.trim().split(/\n/).filter(Boolean).pop() || "";
+        const choiceMatch = source.match(/flaska\s+([AB])/i);
+        if (choiceMatch) return choiceMatch[1];
+        const yesNoMatch = source.match(/\b(ja|nej)\b/i);
+        if (yesNoMatch && !source.match(/[-+]?\d/)) return yesNoMatch[1];
+        const numberMatches = [...source.matchAll(/[-+]?\d+(?:[.,]\d+)?/g)];
+        return numberMatches.length ? numberMatches[numberMatches.length - 1][0] : "";
+    }
+
+    async function testArea(file, name, repetitions, updateProgress) {
+        const errors = [];
+        const seenQuestions = new Set();
+        let documentRef;
+
+        try {
+            documentRef = await loadPage(file);
+        } catch (error) {
+            return { name, checked: 0, errors: [error.message], variants: 0 };
+        }
+
+        for (let index = 0; index < repetitions; index += 1) {
+            const elements = getElements(documentRef);
+            if (!elements.problem || !elements.answer || !elements.label || !elements.result || !elements.calculation || !elements.randomize || !elements.check) {
+                errors.push(`Test ${index + 1}: ett obligatoriskt sid-element saknas.`);
+                break;
+            }
+
+            elements.randomize.click();
+            await wait(20);
+            const question = elements.problem.textContent.trim();
+            const label = elements.label.textContent.trim();
+            seenQuestions.add(question);
+
+            if (!question) errors.push(`Test ${index + 1}: uppgiftstexten är tom.`);
+            if (!label) errors.push(`Test ${index + 1}: enhet eller instruktion vid svarsfältet saknas.`);
+            if (badTextPattern.test(`${question} ${label}`)) errors.push(`Test ${index + 1}: uppgiften innehåller ett ogiltigt värde.`);
+
+            elements.answer.value = "-999999";
+            elements.check.click();
+            await wait(45);
+
+            const calculationText = elements.calculation.textContent.trim();
+            if (!calculationText) {
+                errors.push(`Test ${index + 1}: facit eller beräkning saknas.`);
+            } else if (badTextPattern.test(calculationText)) {
+                errors.push(`Test ${index + 1}: facit innehåller ett ogiltigt värde.`);
+            } else {
+                const displayedAnswer = answerFromFacit(elements.result.textContent.trim(), calculationText);
+                if (displayedAnswer) {
+                    elements.answer.value = displayedAnswer;
+                    elements.check.click();
+                    await wait(25);
+                    const resultText = elements.result.textContent.trim();
+                    if (!/^rätt/i.test(resultText)) {
+                        errors.push(`Test ${index + 1}: det visade svaret ”${displayedAnswer}” godkändes inte av rättningen.`);
+                    }
+                } else {
+                    errors.push(`Test ${index + 1}: svaret kunde inte läsas ur facit.`);
+                }
+            }
+
+            updateProgress();
+            if (errors.length >= 20) {
+                errors.push("Kontrollen stoppades efter 20 upptäckta fel inom området.");
+                break;
+            }
+        }
+
+        return { name, checked: repetitions, errors, variants: seenQuestions.size };
+    }
+
+    function addResultRow(result) {
+        const row = document.createElement("tr");
+        const statusClass = result.errors.length ? "fail" : "pass";
+        const statusText = result.errors.length ? `${result.errors.length} avvikelse(r)` : "Godkänd";
+        row.innerHTML = `<td></td><td>${result.checked}<br><small>${result.variants} olika uppgifter</small></td><td class="${statusClass}">${statusText}</td><td></td>`;
+        row.cells[0].textContent = result.name;
+        row.cells[3].textContent = result.errors.length ? result.errors.join(" ") : "Uppgift, enhet, facit och rättning fungerade.";
+        document.getElementById("resultsBody").appendChild(row);
+    }
+
+    async function runQualityControl() {
+        const button = document.getElementById("runButton");
+        const repetitions = Number(document.getElementById("runsPerArea").value);
+        const total = repetitions * pages.length;
+        let completed = 0;
+        let totalErrors = 0;
+
+        button.disabled = true;
+        document.getElementById("resultsBody").innerHTML = "";
+        document.getElementById("summary").textContent = "";
+        document.getElementById("progress").max = total;
+        document.getElementById("progress").value = 0;
+
+        const updateProgress = () => {
+            completed += 1;
+            document.getElementById("progress").value = completed;
+            document.getElementById("status").textContent = `${completed} av ${total} uppgifter kontrollerade.`;
+        };
+
+        for (const [file, name] of pages) {
+            document.getElementById("status").textContent = `Kontrollerar ${name}…`;
+            const result = await testArea(file, name, repetitions, updateProgress);
+            totalErrors += result.errors.length;
+            addResultRow(result);
+        }
+
+        document.getElementById("progress").value = total;
+        document.getElementById("status").textContent = "Kvalitetskontrollen är färdig.";
+        document.getElementById("summary").className = totalErrors ? "fail" : "pass";
+        document.getElementById("summary").textContent = totalErrors
+            ? `Kontrollen hittade ${totalErrors} avvikelser som behöver granskas.`
+            : `Alla ${total} slumpade uppgifter godkändes.`;
+        button.disabled = false;
+    }
+
+    document.getElementById("runButton").addEventListener("click", runQualityControl);
+</script>
+</body>
+</html>
