@@ -26,6 +26,8 @@
         answerSent = true;
         resultElement.style.display = "none";
         if (calculationElement) calculationElement.style.display = "none";
+        const methodChooser = document.getElementById("methodChooser") || document.getElementById("genericMethodChooser");
+        if (methodChooser) methodChooser.style.display = "none";
         window.parent.postMessage({
             type: "medicationExamAnswer",
             correct: /^rätt/i.test(resultText),
@@ -81,6 +83,24 @@
                     clip: rect(0, 0, 0, 0);
                     white-space: nowrap;
                     border: 0;
+                }
+                .generic-method-chooser { margin-top: 18px; }
+                .generic-method-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+                .generic-method-button {
+                    margin-top: 0; padding: 8px 12px; border-radius: 6px;
+                    background: #fff; color: #195; border: 2px solid #3b7; cursor: pointer;
+                }
+                .generic-method-button.active { background: #3b7; color: #fff; }
+                .generic-method-panel { display: none; color: #555; margin-top: 16px; line-height: 1.6; }
+                .generic-proportion-table { border-collapse: collapse; margin: 6px 0 10px; min-width: 250px; }
+                .generic-proportion-table th, .generic-proportion-table td {
+                    border: 1px solid #aaa; padding: 6px 10px; text-align: center;
+                }
+                .generic-proportion-table th { background: #f1f1f1; }
+                @media (max-width: 500px) {
+                    .generic-method-buttons { display: grid; grid-template-columns: 1fr; }
+                    .generic-method-button { width: 100%; }
+                    .generic-proportion-table { width: 100%; min-width: 0; }
                 }
             `;
             document.head.appendChild(typographyStyle);
@@ -288,8 +308,108 @@
                 row.appendChild(document.createTextNode(`${formula} = ${resultText}`));
             };
 
+            const dimensionalStepHtml = step => {
+                const factorMatch = step.match(/^(.*?)\s+×\s+(.+?)\/(\s*[-+]?\d+(?:[.,]\d+)?\s+[A-Za-zÅÄÖåäöµ²]+)\s*=\s*(.+)$/);
+                if (!factorMatch) return escapeHtml(step);
+
+                const [, leftSide, numeratorText, denominatorText, resultText] = factorMatch;
+                const unitGroup = findUnitGroup(denominatorText);
+                const leftRendered = cancelFirstMatchingUnit(leftSide, unitGroup);
+                const numeratorRendered = leftRendered.matched
+                    ? { html: escapeHtml(numeratorText), matched: false }
+                    : cancelFirstMatchingUnit(numeratorText, unitGroup);
+                const hasCancellablePair = leftRendered.matched || numeratorRendered.matched;
+                const denominatorRendered = hasCancellablePair
+                    ? cancelFirstMatchingUnit(denominatorText, unitGroup)
+                    : { html: escapeHtml(denominatorText), matched: false };
+
+                return `${leftRendered.html} × <span class="dimensional-fraction">` +
+                    `<span class="dimensional-numerator">${numeratorRendered.html}</span>` +
+                    `<span class="visually-hidden"> delat med </span>` +
+                    `<span class="dimensional-denominator">${denominatorRendered.html}</span>` +
+                    `</span> = ${escapeHtml(resultText)}`;
+            };
+
+            const tableHtml = (leftTop, rightTop, leftBottom, rightBottom) =>
+                `<table class="generic-proportion-table"><tr><th>Förhållande 1</th><th>Förhållande 2</th></tr>` +
+                `<tr><td>${escapeHtml(leftTop)}</td><td>${escapeHtml(rightTop)}</td></tr>` +
+                `<tr><td>${escapeHtml(leftBottom)}</td><td>${escapeHtml(rightBottom)}</td></tr></table>`;
+
+            const proportionStepHtml = step => {
+                const factorMatch = step.match(/^(.*?)\s+×\s+(.+?)\/(\s*[-+]?\d+(?:[.,]\d+)?\s+[A-Za-zÅÄÖåäöµ²]+)\s*=\s*(.+)$/);
+                if (factorMatch) {
+                    const [, leftSide, numeratorText, denominatorText, resultText] = factorMatch;
+                    const numerator = numeratorText.trim().match(/^([-+]?\d+(?:[.,]\d+)?)\s*(.*)$/);
+                    if (numerator && Number(numerator[1].replace(",", ".")) === 1 && !numerator[2].trim()) {
+                        const denominatorUnit = denominatorText.trim().replace(/^[-+]?\d+(?:[.,]\d+)?\s*/, "");
+                        return tableHtml(denominatorText.trim(), leftSide.trim(), `1 ${denominatorUnit}`.trim(), "x") +
+                            `<div>x = ${escapeHtml(resultText)}</div>`;
+                    }
+                    return tableHtml(denominatorText.trim(), numeratorText.trim(), leftSide.trim(), "x") +
+                        `<div>x = ${escapeHtml(resultText)}</div>`;
+                }
+
+                const divisionMatch = step.match(/^(.*?)\s+÷\s+(.+?)\s*=\s*(.+)$/);
+                if (divisionMatch) {
+                    const [, leftSide, divisor, resultText] = divisionMatch;
+                    const divisorUnit = divisor.trim().replace(/^[-+]?\d+(?:[.,]\d+)?\s*/, "");
+                    return tableHtml(divisor.trim(), leftSide.trim(), `1 ${divisorUnit}`.trim(), "x") +
+                        `<div>x = ${escapeHtml(resultText)}</div>`;
+                }
+
+                const multiplicationMatch = step.match(/^(.*?)\s+×\s+(.+?)\s*=\s*(.+)$/);
+                if (multiplicationMatch) {
+                    const [, leftSide, multiplier, resultText] = multiplicationMatch;
+                    return tableHtml("1", multiplier.trim(), leftSide.trim(), "x") +
+                        `<div>x = ${escapeHtml(resultText)}</div>`;
+                }
+
+                return `<div>${escapeHtml(step)}</div>`;
+            };
+
+            const addMethodChooser = (steps, answer) => {
+                if (document.getElementById("methodChooser") || /avrundningsregler/i.test(document.title)) return;
+                document.getElementById("genericMethodChooser")?.remove();
+
+                const chooser = document.createElement("div");
+                chooser.id = "genericMethodChooser";
+                chooser.className = "generic-method-chooser";
+                chooser.innerHTML = `<div class="generic-method-buttons" role="group" aria-label="Välj lösningsmetod">` +
+                    `<button type="button" class="generic-method-button active" data-method="formula" aria-pressed="true">✓ Formelmetoden</button>` +
+                    `<button type="button" class="generic-method-button" data-method="dimension" aria-pressed="false">Dimensionsanalys</button>` +
+                    `<button type="button" class="generic-method-button" data-method="proportion" aria-pressed="false">Proportionsmetoden</button></div>` +
+                    `<div class="generic-method-panel" data-panel="dimension"><strong>Dimensionsanalys</strong>` +
+                    steps.map((step, index) => `<div><strong>Steg ${index + 1}:</strong> ${dimensionalStepHtml(step)}</div>`).join("") +
+                    `<div style="margin-top:8px"><strong>Svar:</strong> ${escapeHtml(answer)}</div></div>` +
+                    `<div class="generic-method-panel" data-panel="proportion"><strong>Proportionsmetoden</strong>` +
+                    steps.map((step, index) => `<div style="margin-top:8px"><strong>Steg ${index + 1}:</strong>${proportionStepHtml(step)}</div>`).join("") +
+                    `<div style="margin-top:8px"><strong>Svar:</strong> ${escapeHtml(answer)}</div></div>`;
+
+                const selectMethod = method => {
+                    calculationElement.style.display = method === "formula" ? "block" : "none";
+                    chooser.querySelectorAll("[data-panel]").forEach(panel => {
+                        panel.style.display = panel.dataset.panel === method ? "block" : "none";
+                    });
+                    chooser.querySelectorAll("[data-method]").forEach(button => {
+                        const active = button.dataset.method === method;
+                        button.classList.toggle("active", active);
+                        button.setAttribute("aria-pressed", active ? "true" : "false");
+                        const label = button.dataset.method === "formula" ? "Formelmetoden" :
+                            button.dataset.method === "dimension" ? "Dimensionsanalys" : "Proportionsmetoden";
+                        button.textContent = `${active ? "✓ " : ""}${label}`;
+                    });
+                };
+                chooser.querySelectorAll("[data-method]").forEach(button =>
+                    button.addEventListener("click", () => selectMethod(button.dataset.method)));
+                calculationElement.insertAdjacentElement("afterend", chooser);
+            };
+
             const formatCalculation = () => {
-                if (!calculationElement.textContent.trim() || calculationElement.querySelector(".calculation-steps")) return;
+                if (!calculationElement.textContent.trim()) {
+                    document.getElementById("genericMethodChooser")?.remove();
+                    return;
+                }
+                if (calculationElement.querySelector(".calculation-steps")) return;
 
                 const source = calculationElement.innerHTML
                     .replace(/<br\s*\/?>/gi, "\n")
@@ -344,6 +464,7 @@
                 wrapper.appendChild(answerRow);
 
                 calculationElement.replaceChildren(wrapper);
+                addMethodChooser(steps, answer);
             };
 
             const calculationObserver = new MutationObserver(() => {
