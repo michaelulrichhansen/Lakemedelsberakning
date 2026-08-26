@@ -116,6 +116,67 @@
             labelObserver.observe(answerLabel, { childList: true, subtree: true, characterData: true });
         }
 
+        const questionElement = findElement(["problem", "problemText", "question"]) || document.querySelector(".problem");
+        const randomizeButtonForVariation = Array.from(document.querySelectorAll("button"))
+            .find(button => button.textContent.trim().toLowerCase() === "slumpa värden");
+
+        if (!examMode && questionElement && randomizeButtonForVariation && window.sessionStorage) {
+            const storagePrefix = `medicationPractice:${window.location.pathname}:`;
+            let rerollAttempts = 0;
+            let variationTimer;
+
+            const readStored = (key, fallback) => {
+                try {
+                    const value = window.sessionStorage.getItem(storagePrefix + key);
+                    return value ? JSON.parse(value) : fallback;
+                } catch (error) {
+                    return fallback;
+                }
+            };
+
+            const storeValue = (key, value) => {
+                try {
+                    window.sessionStorage.setItem(storagePrefix + key, JSON.stringify(value));
+                } catch (error) {
+                    // Övningen fungerar även om webbläsaren blockerar tillfällig lagring.
+                }
+            };
+
+            const questionSignature = text => text
+                .toLowerCase()
+                .replace(/\d+(?:[.,]\d+)?/g, "#")
+                .replace(/\s+/g, " ")
+                .trim();
+
+            const checkVariation = () => {
+                const questionText = questionElement.textContent.trim();
+                if (!questionText) return;
+
+                const signature = questionSignature(questionText);
+                const recentQuestions = readStored("recentQuestions", []);
+                const previousSignature = readStored("previousSignature", "");
+                const repeatedValues = recentQuestions.includes(questionText);
+                const repeatedType = previousSignature === signature;
+
+                if ((repeatedValues || repeatedType) && rerollAttempts < 10) {
+                    rerollAttempts += 1;
+                    randomizeButtonForVariation.click();
+                    return;
+                }
+
+                rerollAttempts = 0;
+                storeValue("recentQuestions", [questionText, ...recentQuestions.filter(item => item !== questionText)].slice(0, 6));
+                storeValue("previousSignature", signature);
+            };
+
+            const variationObserver = new MutationObserver(() => {
+                window.clearTimeout(variationTimer);
+                variationTimer = window.setTimeout(checkVariation, 0);
+            });
+            variationObserver.observe(questionElement, { childList: true, subtree: true, characterData: true });
+            window.setTimeout(checkVariation, 0);
+        }
+
         if (!examMode) return;
 
         const randomizeButton = Array.from(document.querySelectorAll("button"))
