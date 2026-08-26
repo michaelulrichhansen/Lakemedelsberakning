@@ -252,27 +252,40 @@
                 }
 
                 const [, leftSide, numeratorText, denominatorText, resultText] = factorMatch;
-                const unitGroup = findUnitGroup(denominatorText);
-                const leftRendered = cancelFirstMatchingUnit(leftSide, unitGroup);
-                const numeratorRendered = leftRendered.matched
-                    ? { html: escapeHtml(numeratorText), matched: false }
-                    : cancelFirstMatchingUnit(numeratorText, unitGroup);
-                // Stryk nämnaren endast när samma enhet verkligen har hittats
-                // på vänster sida eller i täljarfaktorn. Resultatets enhet får
-                // aldrig användas som skäl för att förkorta enheten.
-                const hasCancellablePair = leftRendered.matched || numeratorRendered.matched;
-                const denominatorRendered = hasCancellablePair
-                    ? cancelFirstMatchingUnit(denominatorText, unitGroup)
-                    : { html: escapeHtml(denominatorText), matched: false };
+                const numberAndUnit = text => text.trim().match(/^([-+]?\d+(?:[.,]\d+)?)\s*(.*)$/);
+                const numerator = numberAndUnit(numeratorText);
+                const denominator = numberAndUnit(denominatorText);
 
-                const expression = document.createElement("span");
-                expression.innerHTML = `${leftRendered.html} × ` +
-                    `<span class="dimensional-fraction">` +
-                    `<span class="dimensional-numerator">${numeratorRendered.html}</span>` +
-                    `<span class="visually-hidden"> delat med </span>` +
-                    `<span class="dimensional-denominator">${denominatorRendered.html}</span>` +
-                    `</span> = ${escapeHtml(resultText)}`;
-                row.appendChild(expression);
+                if (!numerator || !denominator) {
+                    row.appendChild(document.createTextNode(step));
+                    return;
+                }
+
+                const numeratorValue = Number(numerator[1].replace(",", "."));
+                const denominatorValue = Number(denominator[1].replace(",", "."));
+                const numeratorUnit = numerator[2].trim();
+                const denominatorUnit = denominator[2].trim();
+                let formula;
+
+                if (numeratorValue === 1 && denominatorValue !== 1) {
+                    // Exempel: 0,75 mg/min × 1 mL/50 mg
+                    // visas med formelmetod som 0,75 mg/min ÷ 50 mg/mL.
+                    const divisorUnit = numeratorUnit
+                        ? `${denominatorUnit}/${numeratorUnit}`
+                        : denominatorUnit;
+                    formula = `${leftSide} ÷ ${denominator[1]} ${divisorUnit}`.trim();
+                } else if (denominatorValue === 1) {
+                    // Exempel: 3 mL × 2,5 mg/1 mL
+                    // visas som 3 mL × 2,5 mg/mL.
+                    const multiplierUnit = denominatorUnit
+                        ? `${numeratorUnit}/${denominatorUnit}`
+                        : numeratorUnit;
+                    formula = `${leftSide} × ${numerator[1]} ${multiplierUnit}`.trim();
+                } else {
+                    formula = `${leftSide} × ${numeratorText}/${denominatorText}`;
+                }
+
+                row.appendChild(document.createTextNode(`${formula} = ${resultText}`));
             };
 
             const formatCalculation = () => {
