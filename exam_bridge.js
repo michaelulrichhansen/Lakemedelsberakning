@@ -239,7 +239,9 @@
                 ["mikrogram", "µg"], ["milligram", "mg"], ["mikroliter", "µL"], ["milliliter", "mL"],
                 ["mikromol", "µmol"], ["millimol", "mmol"], ["mol"],
                 ["timme", "timmar", "h"], ["minut", "minuter", "min"],
-                ["liter", "L"], ["gram", "g"], ["kilogram", "kg"], ["bar"], ["m²"]
+                ["liter", "L"], ["gram", "g"], ["kilogram", "kg"], ["bar"], ["m²"],
+                ["enhet", "enheter", "E"], ["droppe", "droppar"],
+                ["tablett", "tabletter"], ["inhalation", "inhalationer"]
             ];
 
             const escapeHtml = value => value.replace(/[&<>"']/g, character => ({
@@ -313,24 +315,78 @@
 
             const dimensionalStepHtml = step => {
                 const factorMatch = step.match(/^(.*?)\s+×\s+(.+?)\/(\s*[-+]?\d+(?:[.,]\d+)?\s+[A-Za-zÅÄÖåäöµ²]+)\s*=\s*(.+)$/);
-                if (!factorMatch) return escapeHtml(step);
+                if (factorMatch) {
+                    const [, leftSide, numeratorText, denominatorText, resultText] = factorMatch;
+                    const unitGroup = findUnitGroup(denominatorText);
+                    const leftRendered = cancelFirstMatchingUnit(leftSide, unitGroup);
+                    const numeratorRendered = leftRendered.matched
+                        ? { html: escapeHtml(numeratorText), matched: false }
+                        : cancelFirstMatchingUnit(numeratorText, unitGroup);
+                    const hasCancellablePair = leftRendered.matched || numeratorRendered.matched;
+                    const denominatorRendered = hasCancellablePair
+                        ? cancelFirstMatchingUnit(denominatorText, unitGroup)
+                        : { html: escapeHtml(denominatorText), matched: false };
 
-                const [, leftSide, numeratorText, denominatorText, resultText] = factorMatch;
-                const unitGroup = findUnitGroup(denominatorText);
-                const leftRendered = cancelFirstMatchingUnit(leftSide, unitGroup);
-                const numeratorRendered = leftRendered.matched
-                    ? { html: escapeHtml(numeratorText), matched: false }
-                    : cancelFirstMatchingUnit(numeratorText, unitGroup);
-                const hasCancellablePair = leftRendered.matched || numeratorRendered.matched;
-                const denominatorRendered = hasCancellablePair
-                    ? cancelFirstMatchingUnit(denominatorText, unitGroup)
-                    : { html: escapeHtml(denominatorText), matched: false };
+                    return `${leftRendered.html} × <span class="dimensional-fraction">` +
+                        `<span class="dimensional-numerator">${numeratorRendered.html}</span>` +
+                        `<span class="visually-hidden"> delat med </span>` +
+                        `<span class="dimensional-denominator">${denominatorRendered.html}</span>` +
+                        `</span> = ${escapeHtml(resultText)}`;
+                }
 
-                return `${leftRendered.html} × <span class="dimensional-fraction">` +
-                    `<span class="dimensional-numerator">${numeratorRendered.html}</span>` +
-                    `<span class="visually-hidden"> delat med </span>` +
-                    `<span class="dimensional-denominator">${denominatorRendered.html}</span>` +
-                    `</span> = ${escapeHtml(resultText)}`;
+                const splitComposite = text => {
+                    const match = text.trim().match(/^([-+]?\d+(?:[.,]\d+)?)\s*([^/]+)\/([^/]+)$/);
+                    return match ? { value: match[1], numeratorUnit: match[2].trim(), denominatorUnit: match[3].trim() } : null;
+                };
+
+                const multiplicationMatch = step.match(/^(.*?)\s+×\s+(.+?)\s*=\s*(.+)$/);
+                if (multiplicationMatch) {
+                    const [, leftSide, rightSide, resultText] = multiplicationMatch;
+                    const rightComposite = splitComposite(rightSide);
+                    const leftComposite = splitComposite(leftSide);
+
+                    if (rightComposite) {
+                        const group = findUnitGroup(`1 ${rightComposite.denominatorUnit}`);
+                        const leftRendered = cancelFirstMatchingUnit(leftSide, group);
+                        const denominatorRendered = leftRendered.matched
+                            ? cancelFirstMatchingUnit(`1 ${rightComposite.denominatorUnit}`, group)
+                            : { html: escapeHtml(`1 ${rightComposite.denominatorUnit}`) };
+                        return `${leftRendered.html} × <span class="dimensional-fraction">` +
+                            `<span class="dimensional-numerator">${escapeHtml(`${rightComposite.value} ${rightComposite.numeratorUnit}`)}</span>` +
+                            `<span class="dimensional-denominator">${denominatorRendered.html}</span></span> = ${escapeHtml(resultText)}`;
+                    }
+
+                    if (leftComposite) {
+                        const group = findUnitGroup(`1 ${leftComposite.denominatorUnit}`);
+                        const rightRendered = cancelFirstMatchingUnit(rightSide, group);
+                        const denominatorRendered = rightRendered.matched
+                            ? cancelFirstMatchingUnit(`1 ${leftComposite.denominatorUnit}`, group)
+                            : { html: escapeHtml(`1 ${leftComposite.denominatorUnit}`) };
+                        return `<span class="dimensional-fraction"><span class="dimensional-numerator">${escapeHtml(`${leftComposite.value} ${leftComposite.numeratorUnit}`)}</span>` +
+                            `<span class="dimensional-denominator">${denominatorRendered.html}</span></span> × ${rightRendered.html} = ${escapeHtml(resultText)}`;
+                    }
+                }
+
+                const divisionMatch = step.match(/^(.*?)\s+÷\s+(.+?)\s*=\s*(.+)$/);
+                if (divisionMatch) {
+                    const [, leftSide, divisor, resultText] = divisionMatch;
+                    const compositeDivisor = splitComposite(divisor);
+                    if (compositeDivisor) {
+                        const group = findUnitGroup(`1 ${compositeDivisor.numeratorUnit}`);
+                        const leftRendered = cancelFirstMatchingUnit(leftSide, group);
+                        const denominatorRendered = leftRendered.matched
+                            ? cancelFirstMatchingUnit(`${compositeDivisor.value} ${compositeDivisor.numeratorUnit}`, group)
+                            : { html: escapeHtml(`${compositeDivisor.value} ${compositeDivisor.numeratorUnit}`) };
+                        return `${leftRendered.html} × <span class="dimensional-fraction">` +
+                            `<span class="dimensional-numerator">1 ${escapeHtml(compositeDivisor.denominatorUnit)}</span>` +
+                            `<span class="dimensional-denominator">${denominatorRendered.html}</span></span> = ${escapeHtml(resultText)}`;
+                    }
+
+                    return `${escapeHtml(leftSide)} × <span class="dimensional-fraction">` +
+                        `<span class="dimensional-numerator">1</span><span class="dimensional-denominator">${escapeHtml(divisor)}</span></span> = ${escapeHtml(resultText)}`;
+                }
+
+                return escapeHtml(step);
             };
 
             const tableHtml = (leftTop, rightTop, leftBottom, rightBottom) =>
