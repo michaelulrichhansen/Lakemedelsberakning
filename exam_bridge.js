@@ -37,6 +37,24 @@
     }
 
     function connect() {
+        if (typeof document.createElement === "function" &&
+            document.head &&
+            !document.getElementById("consistent-problem-typography")) {
+            const typographyStyle = document.createElement("style");
+            typographyStyle.id = "consistent-problem-typography";
+            typographyStyle.textContent = `
+                #problem, #problemText, #question, .problem,
+                #problem strong, #problem b,
+                #problemText strong, #problemText b,
+                #question strong, #question b,
+                .problem strong, .problem b {
+                    font-family: Arial, sans-serif;
+                    font-weight: 600 !important;
+                }
+            `;
+            document.head.appendChild(typographyStyle);
+        }
+
         const heading = document.querySelector("h1");
         const card = document.querySelector(".card") || document.querySelector("main") || document.body;
         if (heading && card && !document.querySelector(".site-breadcrumb")) {
