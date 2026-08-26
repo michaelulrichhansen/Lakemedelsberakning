@@ -32,22 +32,17 @@
     <script>
         const decimalHours = [0.1, 0.2, 0.25, 0.4, 0.5, 0.75, 1.25, 1.5, 1.75, 2.25, 2.5, 2.75, 3.5, 4.5, 6.5];
         const exactMinuteValues = [15, 30, 45, 75, 90, 105, 135, 150, 165, 210, 270, 390];
-        const roundedMinuteValues = [50, 70, 80, 100, 110, 130, 140, 160, 200, 250];
+        const decimalDurations = [1.25, 1.5, 1.75, 2.25, 2.5, 2.75, 3.25, 3.5, 3.75, 4.5, 5.25, 5.5, 6.75];
         const wholeHours = [1, 2, 3, 4, 5, 6, 8, 10, 12];
         const extraMinutes = [15, 30, 45];
 
         let correctAnswer, answerUnit, calcText;
-        let nextCaseType = Math.floor(Math.random() * 5);
+        let nextCaseType = 0;
 
         const pick = values => values[Math.floor(Math.random() * values.length)];
 
         function formatNumber(value) {
             return Number(value.toFixed(2)).toString().replace(".", ",");
-        }
-
-        function formatUnrounded(value) {
-            const truncated = Math.trunc(value * 1000) / 1000;
-            return truncated.toFixed(3).replace(".", ",") + "…";
         }
 
         function generateProblem() {
@@ -70,30 +65,35 @@
                     `En infusion ska pågå i ${minutes} minuter. Hur många timmar motsvarar detta uttryckt som decimaltal?`;
             } else if (caseType === 2) {
                 const hours = pick(wholeHours);
+                const hourWord = hours === 1 ? "timme" : "timmar";
                 const minutes = pick(extraMinutes);
                 correctAnswer = hours * 60 + minutes;
                 answerUnit = "minuter";
-                calcText = `${hours} timmar × 60 minuter/1 timme = ${hours * 60} minuter<br>${hours * 60} minuter + ${minutes} minuter = ${correctAnswer} minuter`;
+                calcText = `${hours} ${hourWord} × 60 minuter/1 timme = ${hours * 60} minuter<br>${hours * 60} minuter + ${minutes} minuter = ${correctAnswer} minuter`;
                 document.getElementById("problem").textContent =
-                    `En behandling ska pågå i ${hours} timmar och ${minutes} minuter. Hur många minuter är det sammanlagt?`;
+                    `En behandling ska pågå i ${hours} ${hourWord} och ${minutes} minuter. Hur många minuter är det sammanlagt?`;
             } else if (caseType === 3) {
                 const hours = pick(wholeHours);
+                const hourWord = hours === 1 ? "timme" : "timmar";
+                const wholeHourText = hours === 1 ? "1 hel timme" : `${hours} hela timmar`;
                 const minutes = pick(extraMinutes);
                 const totalMinutes = hours * 60 + minutes;
                 correctAnswer = minutes;
                 answerUnit = "minuter";
-                calcText = `${hours} timmar × 60 minuter/1 timme = ${hours * 60} minuter<br>${totalMinutes} minuter − ${hours * 60} minuter = ${correctAnswer} minuter`;
+                calcText = `${hours} ${hourWord} × 60 minuter/1 timme = ${hours * 60} minuter<br>${totalMinutes} minuter − ${hours * 60} minuter = ${correctAnswer} minuter`;
                 document.getElementById("problem").textContent =
-                    `${totalMinutes} minuter motsvarar ${hours} hela timmar och hur många minuter?`;
+                    `${totalMinutes} minuter motsvarar ${wholeHourText} och hur många minuter?`;
             } else {
-                const minutes = pick(roundedMinuteValues);
-                const unroundedHours = minutes / 60;
-                correctAnswer = Math.round((unroundedHours + Number.EPSILON) * 100) / 100;
-                answerUnit = "timmar";
-                calcText = `${minutes} minuter × 1 timme/60 minuter = ${formatUnrounded(unroundedHours)} timmar<br>` +
-                    `Avrundat till två decimaler: ${formatNumber(correctAnswer)} timmar`;
+                const decimalDuration = pick(decimalDurations);
+                const wholeHourPart = Math.floor(decimalDuration);
+                const wholeHourText = wholeHourPart === 1 ? "1 hel timme" : `${wholeHourPart} hela timmar`;
+                const decimalHourPart = decimalDuration - wholeHourPart;
+                correctAnswer = Math.round(decimalHourPart * 60);
+                answerUnit = "minuter";
+                calcText = `${formatNumber(decimalDuration)} timmar = ${wholeHourText} + ${formatNumber(decimalHourPart)} timmar<br>` +
+                    `${formatNumber(decimalHourPart)} timmar × 60 minuter/1 timme = ${correctAnswer} minuter`;
                 document.getElementById("problem").textContent =
-                    `${minutes} minuter ska uttryckas i timmar som decimaltal. Hur många timmar motsvarar detta? Avrunda till två decimaler.`;
+                    `${formatNumber(decimalDuration)} timmar motsvarar ${wholeHourText} och hur många minuter?`;
             }
 
             document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit}:`;
