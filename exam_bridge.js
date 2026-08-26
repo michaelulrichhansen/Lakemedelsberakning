@@ -90,8 +90,11 @@
                     margin-top: 0; padding: 8px 12px; border-radius: 6px;
                     background: #fff; color: #195; border: 2px solid #3b7; cursor: pointer;
                 }
-                .generic-method-button.active { background: #3b7; color: #fff; }
-                .generic-method-panel { display: none; color: #555; margin-top: 16px; line-height: 1.6; }
+                .generic-method-button.active { background: #176b45; border-color: #176b45; color: #fff; }
+                .generic-method-panel { display: none; color: #555; margin-top: 16px; line-height: 1.6; overflow-x: auto; }
+                .method-help { margin: 12px 0 0; padding: 12px; background: #f3f8f5; border-left: 4px solid #3b7; border-radius: 4px; }
+                .method-help p { margin: 5px 0; }
+                .method-help-toggle { margin-top: 10px; color: #176b45; background: transparent; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
                 .generic-proportion-table { border-collapse: collapse; margin: 6px 0 10px; min-width: 250px; }
                 .generic-proportion-table th, .generic-proportion-table td {
                     border: 1px solid #aaa; padding: 6px 10px; text-align: center;
@@ -335,6 +338,12 @@
                 `<tr><td>${escapeHtml(leftTop)}</td><td>${escapeHtml(rightTop)}</td></tr>` +
                 `<tr><td>${escapeHtml(leftBottom)}</td><td>${escapeHtml(rightBottom)}</td></tr></table>`;
 
+            const splitCompositeQuantity = text => {
+                const match = text.trim().match(/^([-+]?\d+(?:[.,]\d+)?)\s*([^/]+)\/([^/]+)$/);
+                if (!match) return null;
+                return { value: match[1], numeratorUnit: match[2].trim(), denominatorUnit: match[3].trim() };
+            };
+
             const proportionStepHtml = step => {
                 const factorMatch = step.match(/^(.*?)\s+×\s+(.+?)\/(\s*[-+]?\d+(?:[.,]\d+)?\s+[A-Za-zÅÄÖåäöµ²]+)\s*=\s*(.+)$/);
                 if (factorMatch) {
@@ -352,6 +361,11 @@
                 const divisionMatch = step.match(/^(.*?)\s+÷\s+(.+?)\s*=\s*(.+)$/);
                 if (divisionMatch) {
                     const [, leftSide, divisor, resultText] = divisionMatch;
+                    const compositeDivisor = splitCompositeQuantity(divisor);
+                    if (compositeDivisor) {
+                        return tableHtml(`${compositeDivisor.value} ${compositeDivisor.numeratorUnit}`, `1 ${compositeDivisor.denominatorUnit}`, leftSide.trim(), "x") +
+                            `<div>x = ${escapeHtml(resultText)}</div>`;
+                    }
                     const divisorUnit = divisor.trim().replace(/^[-+]?\d+(?:[.,]\d+)?\s*/, "");
                     return tableHtml(divisor.trim(), leftSide.trim(), `1 ${divisorUnit}`.trim(), "x") +
                         `<div>x = ${escapeHtml(resultText)}</div>`;
@@ -360,16 +374,63 @@
                 const multiplicationMatch = step.match(/^(.*?)\s+×\s+(.+?)\s*=\s*(.+)$/);
                 if (multiplicationMatch) {
                     const [, leftSide, multiplier, resultText] = multiplicationMatch;
-                    return tableHtml("1", multiplier.trim(), leftSide.trim(), "x") +
-                        `<div>x = ${escapeHtml(resultText)}</div>`;
+                    const compositeMultiplier = splitCompositeQuantity(multiplier);
+                    if (compositeMultiplier) {
+                        return tableHtml(`1 ${compositeMultiplier.denominatorUnit}`, `${compositeMultiplier.value} ${compositeMultiplier.numeratorUnit}`, leftSide.trim(), "x") +
+                            `<div>x = ${escapeHtml(resultText)}</div>`;
+                    }
+                    const compositeLeft = splitCompositeQuantity(leftSide);
+                    if (compositeLeft) {
+                        return tableHtml(`1 ${compositeLeft.denominatorUnit}`, `${compositeLeft.value} ${compositeLeft.numeratorUnit}`, multiplier.trim(), "x") +
+                            `<div>x = ${escapeHtml(resultText)}</div>`;
+                    }
+                    return null;
                 }
 
-                return `<div>${escapeHtml(step)}</div>`;
+                return null;
+            };
+
+            const attachMethodHelp = chooser => {
+                if (!chooser || chooser.querySelector(".method-help-toggle")) return;
+                const buttons = chooser.querySelector(".generic-method-buttons, .method-buttons");
+                if (!buttons) return;
+                const help = document.createElement("div");
+                help.className = "method-help";
+                help.innerHTML = `<strong>Så fungerar metoderna</strong>` +
+                    `<p><strong>Formelmetoden:</strong> välj rätt formel och sätt in uppgiftens värden.</p>` +
+                    `<p><strong>Dimensionsanalys:</strong> multiplicera med omvandlingsfaktorer och kontrollera vilka enheter som förkortas bort.</p>` +
+                    `<p><strong>Proportionsmetoden:</strong> placera motsvarande storheter i samma kolumn och lös ut x genom korsmultiplikation.</p>` +
+                    `<p>Endast de metoder som passar den aktuella uppgiften visas.</p>`;
+                let seen = false;
+                try { seen = window.localStorage.getItem("solutionMethodHelpSeen") === "yes"; } catch (_) {}
+                help.style.display = seen ? "none" : "block";
+                const toggle = document.createElement("button");
+                toggle.type = "button";
+                toggle.className = "method-help-toggle";
+                toggle.textContent = seen ? "Vad innebär metoderna?" : "Dölj metodförklaringen";
+                toggle.addEventListener("click", () => {
+                    const willShow = help.style.display === "none";
+                    help.style.display = willShow ? "block" : "none";
+                    toggle.textContent = willShow ? "Dölj metodförklaringen" : "Vad innebär metoderna?";
+                    if (!willShow) {
+                        try { window.localStorage.setItem("solutionMethodHelpSeen", "yes"); } catch (_) {}
+                    }
+                });
+                buttons.insertAdjacentElement("afterend", help);
+                help.insertAdjacentElement("afterend", toggle);
             };
 
             const addMethodChooser = (steps, answer) => {
-                if (document.getElementById("methodChooser") || /avrundningsregler/i.test(document.title)) return;
+                const customChooser = document.getElementById("methodChooser");
+                if (customChooser) {
+                    attachMethodHelp(customChooser);
+                    return;
+                }
+                if (/avrundningsregler/i.test(document.title)) return;
                 document.getElementById("genericMethodChooser")?.remove();
+
+                const proportionSteps = steps.map(proportionStepHtml);
+                const hasProportion = proportionSteps.every(Boolean);
 
                 const chooser = document.createElement("div");
                 chooser.id = "genericMethodChooser";
@@ -377,13 +438,13 @@
                 chooser.innerHTML = `<div class="generic-method-buttons" role="group" aria-label="Välj lösningsmetod">` +
                     `<button type="button" class="generic-method-button active" data-method="formula" aria-pressed="true">✓ Formelmetoden</button>` +
                     `<button type="button" class="generic-method-button" data-method="dimension" aria-pressed="false">Dimensionsanalys</button>` +
-                    `<button type="button" class="generic-method-button" data-method="proportion" aria-pressed="false">Proportionsmetoden</button></div>` +
+                    (hasProportion ? `<button type="button" class="generic-method-button" data-method="proportion" aria-pressed="false">Proportionsmetoden</button>` : "") + `</div>` +
                     `<div class="generic-method-panel" data-panel="dimension"><strong>Dimensionsanalys</strong>` +
                     steps.map((step, index) => `<div><strong>Steg ${index + 1}:</strong> ${dimensionalStepHtml(step)}</div>`).join("") +
                     `<div style="margin-top:8px"><strong>Svar:</strong> ${escapeHtml(answer)}</div></div>` +
-                    `<div class="generic-method-panel" data-panel="proportion"><strong>Proportionsmetoden</strong>` +
-                    steps.map((step, index) => `<div style="margin-top:8px"><strong>Steg ${index + 1}:</strong>${proportionStepHtml(step)}</div>`).join("") +
-                    `<div style="margin-top:8px"><strong>Svar:</strong> ${escapeHtml(answer)}</div></div>`;
+                    (hasProportion ? `<div class="generic-method-panel" data-panel="proportion"><strong>Proportionsmetoden</strong>` +
+                    proportionSteps.map((step, index) => `<div style="margin-top:8px"><strong>Steg ${index + 1}:</strong>${step}</div>`).join("") +
+                    `<div style="margin-top:8px"><strong>Svar:</strong> ${escapeHtml(answer)}</div></div>` : "");
 
                 const selectMethod = method => {
                     calculationElement.style.display = method === "formula" ? "block" : "none";
@@ -402,6 +463,7 @@
                 chooser.querySelectorAll("[data-method]").forEach(button =>
                     button.addEventListener("click", () => selectMethod(button.dataset.method)));
                 calculationElement.insertAdjacentElement("afterend", chooser);
+                attachMethodHelp(chooser);
             };
 
             const formatCalculation = () => {
