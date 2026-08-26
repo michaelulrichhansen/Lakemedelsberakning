@@ -79,6 +79,7 @@
     ];
 
     const badTextPattern = /\b(?:NaN|undefined|null|Infinity)\b/i;
+    const nakedConversionPattern = /(?:×|÷)\s*(?:24|60|100|1000)\s*(?==|\+|−|$)/;
     const frame = document.getElementById("testFrame");
     const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
@@ -167,6 +168,8 @@
                 errors.push(`Test ${index + 1}: facit eller beräkning saknas.`);
             } else if (badTextPattern.test(calculationText)) {
                 errors.push(`Test ${index + 1}: facit innehåller ett ogiltigt värde.`);
+            } else if (nakedConversionPattern.test(calculationText)) {
+                errors.push(`Test ${index + 1}: en omvandlingsfaktor saknar enhet i facit.`);
             } else {
                 const displayedAnswer = answerFromFacit(elements.result.textContent.trim(), calculationText);
                 if (displayedAnswer) {

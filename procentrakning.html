@@ -67,7 +67,7 @@
                     `En infusionsvätska har styrkan ${formatNumber(percent)} % (vikt/volym). Vilken styrka motsvarar detta i mg/mL?`;
                 calcText =
                     `${formatNumber(percent)} % = ${formatNumber(percent)} g/100 mL<br>` +
-                    `${formatNumber(percent)} g × 1000 mg/g = ${formatNumber(percent * 1000)} mg<br>` +
+                    `${formatNumber(percent)} g/100 mL × 1000 mg/1 g = ${formatNumber(percent * 1000)} mg/100 mL<br>` +
                     `${formatNumber(percent * 1000)} mg ÷ 100 mL = ${formatNumber(correctAnswer)} mg/mL`;
             } else if (questionType === 1) {
                 const strengthMgMl = percent * 10;
@@ -77,7 +77,7 @@
                     `En infusionsvätska har styrkan ${formatNumber(strengthMgMl)} mg/mL. Vilken styrka motsvarar detta i vikt/volymprocent?`;
                 calcText =
                     `${formatNumber(strengthMgMl)} mg/mL × 100 mL = ${formatNumber(strengthMgMl * 100)} mg/100 mL<br>` +
-                    `${formatNumber(strengthMgMl * 100)} mg ÷ 1000 mg/g = ${formatNumber(percent)} g/100 mL<br>` +
+                    `${formatNumber(strengthMgMl * 100)} mg/100 mL × 1 g/1000 mg = ${formatNumber(percent)} g/100 mL<br>` +
                     `${formatNumber(percent)} g/100 mL = ${formatNumber(correctAnswer)} %`;
             } else if (questionType === 2) {
                 const volumeMl = pick(smallVolumesMl);
@@ -126,7 +126,7 @@
                 document.getElementById("problem").textContent =
                     `En salva innehåller ${formatNumber(activeAmountG)} g verksam substans i totalt ${totalWeightG} g salva. Vilken är salvans styrka i vikt/viktprocent?`;
                 calcText =
-                    `${formatNumber(activeAmountG)} g ÷ ${totalWeightG} g × 100 = ${formatNumber(correctAnswer)} %`;
+                    `${formatNumber(activeAmountG)} g ÷ ${totalWeightG} g × 100 % = ${formatNumber(correctAnswer)} %`;
             }
 
             document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit}:`;

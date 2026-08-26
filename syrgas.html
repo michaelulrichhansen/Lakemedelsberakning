@@ -93,19 +93,19 @@
             if (caseType === 0) {
                 correctAnswer = totalVolume;
                 answerUnit = "liter";
-                calcText = `${cylinderVolume} L × ${pressure} bar = ${correctAnswer} liter syrgas`;
+                calcText = `${cylinderVolume} L × ${pressure} bar/1 bar = ${correctAnswer} liter syrgas`;
                 document.getElementById("problem").textContent =
                     `En syrgasflaska har en flaskvolym på ${cylinderVolume} L och manometern visar ${pressure} bar. Hur många liter syrgas innehåller flaskan?`;
             } else if (caseType === 1) {
                 correctAnswer = durationMinutes;
                 answerUnit = "minuter";
-                calcText = `${cylinderVolume} L × ${pressure} bar = ${totalVolume} liter. ${totalVolume} liter ÷ ${flow} L/min = ${correctAnswer} minuter`;
+                calcText = `${cylinderVolume} L × ${pressure} bar/1 bar = ${totalVolume} liter syrgas. ${totalVolume} liter syrgas ÷ ${flow} liter syrgas/minut = ${correctAnswer} minuter`;
                 document.getElementById("problem").textContent =
                     `En syrgasflaska har en flaskvolym på ${cylinderVolume} L och manometern visar ${pressure} bar. Patienten får ${flow} L syrgas/minut. Hur många minuter räcker flaskan?`;
             } else if (caseType === 2) {
                 correctAnswer = flow;
                 answerUnit = "L/min";
-                calcText = `${cylinderVolume} L × ${pressure} bar = ${totalVolume} liter. ${totalVolume} liter ÷ ${durationMinutes} min = ${correctAnswer} L/min`;
+                calcText = `${cylinderVolume} L × ${pressure} bar/1 bar = ${totalVolume} liter syrgas. ${totalVolume} liter syrgas ÷ ${durationMinutes} minuter = ${correctAnswer} liter syrgas/minut`;
                 document.getElementById("problem").textContent =
                     `En syrgasflaska har en flaskvolym på ${cylinderVolume} L och manometern visar ${pressure} bar. Syrgasen ska räcka i ${durationMinutes} minuter. Vilket flöde i L/min motsvarar detta?`;
             } else if (caseType === 3) {
@@ -113,7 +113,7 @@
                 const need = currentCase.flow * currentCase.durationMinutes;
                 correctAnswer = need / currentCase.cylinderVolume;
                 answerUnit = "bar";
-                calcText = `${currentCase.durationMinutes} min × ${currentCase.flow} L/min = ${need} liter syrgas. ${need} liter ÷ ${currentCase.cylinderVolume} L = ${correctAnswer} bar`;
+                calcText = `${currentCase.durationMinutes} minuter × ${currentCase.flow} liter syrgas/minut = ${need} liter syrgas. ${need} liter syrgas ÷ ${currentCase.cylinderVolume} L × 1 bar = ${correctAnswer} bar`;
                 document.getElementById("problem").textContent =
                     `En patient behöver ${currentCase.flow} liter syrgas/minut under en transport som tar ${formatTime(currentCase.durationMinutes)}. Du har en syrgasflaska med flaskvolymen ${currentCase.cylinderVolume} L. Vilket är det lägsta trycket som manometern måste visa för att syrgasen ska räcka? Resttryck behöver inte beaktas.`;
             } else if (caseType === 4) {
@@ -126,7 +126,7 @@
                 const differenceText = correctAnswer >= 0
                     ? `${correctAnswer} liter överskott`
                     : `${Math.abs(correctAnswer)} liter underskott`;
-                calcText = `${currentCase.cylinderVolume} L × ${currentCase.pressure} bar = ${available} liter tillgänglig syrgas.<br>${currentCase.durationMinutes} min × ${currentCase.flow} L/min = ${need} liter behövs.<br>${available} liter − ${need} liter = ${correctAnswer} liter, alltså ${differenceText}.`;
+                calcText = `${currentCase.cylinderVolume} L × ${currentCase.pressure} bar/1 bar = ${available} liter tillgänglig syrgas.<br>${currentCase.durationMinutes} minuter × ${currentCase.flow} liter syrgas/minut = ${need} liter syrgas behövs.<br>${available} liter syrgas − ${need} liter syrgas = ${correctAnswer} liter syrgas, alltså ${differenceText}.`;
                 document.getElementById("problem").textContent =
                     `En patient behöver ${currentCase.flow} liter syrgas/minut under en transport som tar ${formatTime(currentCase.durationMinutes)}. Syrgasflaskan har flaskvolymen ${currentCase.cylinderVolume} L och trycket ${currentCase.pressure} bar. Räcker syrgasen? Svara ja eller nej och ange antal liter överskott eller underskott. Resttryck behöver inte beaktas.`;
             } else {
@@ -137,7 +137,7 @@
                 correctChoice = availableA >= need ? "a" : "b";
                 correctAnswer = correctChoice;
                 answerUnit = "flaska";
-                calcText = `${currentCase.durationMinutes} min × ${currentCase.flow} L/min = ${need} liter behövs.<br>Flaska A: ${currentCase.aVolume} L × ${currentCase.aPressure} bar = ${availableA} liter.<br>Flaska B: ${currentCase.bVolume} L × ${currentCase.bPressure} bar = ${availableB} liter.<br>Alltså ska flaska ${correctChoice.toUpperCase()} väljas.`;
+                calcText = `${currentCase.durationMinutes} minuter × ${currentCase.flow} liter syrgas/minut = ${need} liter syrgas behövs.<br>Flaska A: ${currentCase.aVolume} L × ${currentCase.aPressure} bar/1 bar = ${availableA} liter syrgas.<br>Flaska B: ${currentCase.bVolume} L × ${currentCase.bPressure} bar/1 bar = ${availableB} liter syrgas.<br>Alltså ska flaska ${correctChoice.toUpperCase()} väljas.`;
                 document.getElementById("problem").textContent =
                     `En patient behöver ${currentCase.flow} liter syrgas/minut under en transport som tar ${formatTime(currentCase.durationMinutes)}. Flaska A har flaskvolymen ${currentCase.aVolume} L och trycket ${currentCase.aPressure} bar. Flaska B har flaskvolymen ${currentCase.bVolume} L och trycket ${currentCase.bPressure} bar. Vilken flaska ska väljas för att syrgasen ska räcka? Resttryck behöver inte beaktas.`;
             }

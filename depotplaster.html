@@ -90,7 +90,7 @@
                 answerUnit = "mg per dygn";
                 document.getElementById("problem").textContent =
                     `Ett depotplåster frisätter ${formatNumber(strengthPerHour)} mikrogram per timme. Hur många mg läkemedel frisätter plåstret under ett dygn?`;
-                calculationText = `${formatNumber(strengthPerHour)} mikrogram/timme × 24 timmar = ${formatNumber(strengthPerHour * 24)} mikrogram. ${formatNumber(strengthPerHour * 24)} mikrogram ÷ 1000 = ${formatNumber(correctAnswer)} mg`;
+                calculationText = `${formatNumber(strengthPerHour)} mikrogram/timme × 24 timmar = ${formatNumber(strengthPerHour * 24)} mikrogram. ${formatNumber(strengthPerHour * 24)} mikrogram × 1 mg/1000 mikrogram = ${formatNumber(correctAnswer)} mg`;
             }
 
             document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit}:`;
@@ -108,9 +108,9 @@
             correctAnswer = releasedMg;
             answerUnit = "mg";
             calculationText =
-                `${currentCase.microgramsPer24Hours} µg/24 h ÷ 24 = ${formatNumber(microgramsPerHour)} µg/timme<br>` +
+                `${currentCase.microgramsPer24Hours} µg ÷ 24 timmar = ${formatNumber(microgramsPerHour)} µg/timme<br>` +
                 `${formatNumber(microgramsPerHour)} µg/timme × ${currentCase.hours} timmar = ${formatNumber(releasedMicrograms)} µg<br>` +
-                `${formatNumber(releasedMicrograms)} µg ÷ 1000 = ${formatNumber(releasedMg)} mg`;
+                `${formatNumber(releasedMicrograms)} µg × 1 mg/1000 µg = ${formatNumber(releasedMg)} mg`;
 
             document.getElementById("problem").textContent =
                 `Ett depotplåster frisätter ${currentCase.microgramsPer24Hours} µg/24 h. ` +
