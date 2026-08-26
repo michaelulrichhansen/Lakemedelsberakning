@@ -177,6 +177,70 @@
             window.setTimeout(checkVariation, 0);
         }
 
+        const calculationElement = findElement(["calculation", "conversionSteps"]);
+        if (calculationElement && typeof document.createElement === "function") {
+            let calculationTimer;
+
+            const formatCalculation = () => {
+                if (!calculationElement.textContent.trim() || calculationElement.querySelector(".calculation-steps")) return;
+
+                const source = calculationElement.innerHTML
+                    .replace(/<br\s*\/?>/gi, "\n")
+                    .replace(/<\/p>|<\/div>/gi, "\n");
+                const holder = document.createElement("div");
+                holder.innerHTML = source;
+                const plainText = holder.textContent
+                    .replace(/^\s*Beräkning:\s*/i, "")
+                    .trim();
+                if (!plainText) return;
+
+                const steps = plainText
+                    .split(/\n+|\.\s+(?=[A-ZÅÄÖ0-9(])/)
+                    .map(step => step.trim().replace(/\.$/, ""))
+                    .filter(Boolean);
+                if (steps.length === 0) return;
+
+                const lastStep = steps[steps.length - 1];
+                let answer = lastStep;
+                if (/^alltså/i.test(lastStep)) {
+                    answer = lastStep.replace(/^alltså\s*/i, "");
+                } else {
+                    const approximateIndex = lastStep.lastIndexOf("≈");
+                    const equalsIndex = lastStep.lastIndexOf("=");
+                    const separatorIndex = approximateIndex >= 0 ? approximateIndex : equalsIndex;
+                    if (separatorIndex >= 0) answer = lastStep.slice(separatorIndex + 1).trim();
+                }
+
+                const wrapper = document.createElement("div");
+                wrapper.className = "calculation-steps";
+                wrapper.style.lineHeight = "1.6";
+
+                steps.forEach((step, index) => {
+                    const row = document.createElement("div");
+                    const label = document.createElement("strong");
+                    label.textContent = `Steg ${index + 1}: `;
+                    row.append(label, document.createTextNode(step));
+                    wrapper.appendChild(row);
+                });
+
+                const answerRow = document.createElement("div");
+                answerRow.style.marginTop = "8px";
+                const answerLabel = document.createElement("strong");
+                answerLabel.textContent = "Svar: ";
+                answerRow.append(answerLabel, document.createTextNode(answer));
+                wrapper.appendChild(answerRow);
+
+                calculationElement.replaceChildren(wrapper);
+            };
+
+            const calculationObserver = new MutationObserver(() => {
+                window.clearTimeout(calculationTimer);
+                calculationTimer = window.setTimeout(formatCalculation, 0);
+            });
+            calculationObserver.observe(calculationElement, { childList: true, subtree: true, characterData: true });
+            window.setTimeout(formatCalculation, 0);
+        }
+
         if (!examMode) return;
 
         const randomizeButton = Array.from(document.querySelectorAll("button"))
@@ -190,7 +254,7 @@
 
         const resultElement = findElement(["result", "response"]);
         if (resultElement) {
-            const observer = new MutationObserver(sendAnswer);
+            const observer = new MutationObserver(() => window.setTimeout(sendAnswer, 30));
             observer.observe(resultElement, { childList: true, subtree: true, characterData: true });
         }
 
