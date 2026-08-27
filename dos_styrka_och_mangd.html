@@ -35,7 +35,8 @@
         const tabletStrengths = [50, 100, 200, 250, 400, 500];
         const tabletCounts = [0.5, 1, 1.5, 2, 2.5, 3];
 
-        let correctAnswer, answerUnit, calculationText;
+        let correctAnswer, answerUnit, calculationText, questionType;
+        let nextQuestionType = 0;
 
         const pick = values => values[Math.floor(Math.random() * values.length)];
 
@@ -44,7 +45,8 @@
         }
 
         function randomizeValues() {
-            const questionType = Math.floor(Math.random() * 5);
+            questionType = nextQuestionType;
+            nextQuestionType = (nextQuestionType + 1) % 8;
             let problemText = "";
 
             if (questionType < 3) {
@@ -68,7 +70,7 @@
                     problemText = `En läkemedelslösning innehåller totalt ${formatNumber(dose)} mg i ${formatNumber(volume)} mL. Vilken styrka har lösningen i mg/mL?`;
                     calculationText = `${formatNumber(dose)} mg ÷ ${formatNumber(volume)} mL = ${formatNumber(correctAnswer)} mg/mL`;
                 }
-            } else {
+            } else if (questionType < 5) {
                 const strength = pick(tabletStrengths);
                 const numberOfTablets = pick(tabletCounts);
                 const dose = strength * numberOfTablets;
@@ -85,6 +87,37 @@
                     problemText = `En patient får ${formatNumber(numberOfTablets)} ${tabletWord}. Varje tablett innehåller ${formatNumber(strength)} mg. Hur stor total dos i mg får patienten?`;
                     calculationText = `${formatNumber(strength)} mg/tablett × ${formatNumber(numberOfTablets)} ${tabletWord} = ${formatNumber(correctAnswer)} mg`;
                 }
+            } else if (questionType === 5) {
+                const strength = pick(liquidStrengths);
+                const administrations = pick([2, 3, 4]);
+                const volumePerDose = pick([0.5, 1, 2, 5]);
+                const dosePerAdministration = strength * volumePerDose;
+                const dailyDose = dosePerAdministration * administrations;
+                correctAnswer = volumePerDose;
+                answerUnit = "mL per doseringstillfälle";
+                problemText = `En patient är ordinerad totalt ${formatNumber(dailyDose)} mg per dygn, fördelat på ${administrations} lika stora doseringstillfällen. Läkemedlets styrka är ${formatNumber(strength)} mg/mL. Hur många mL ska ges vid varje doseringstillfälle?`;
+                calculationText = `${formatNumber(dailyDose)} mg/dygn ÷ ${administrations} doseringstillfällen/dygn = ${formatNumber(dosePerAdministration)} mg/doseringstillfälle<br>${formatNumber(dosePerAdministration)} mg/doseringstillfälle ÷ ${formatNumber(strength)} mg/mL = ${formatNumber(correctAnswer)} mL/doseringstillfälle`;
+            } else if (questionType === 6) {
+                const strength = pick(liquidStrengths);
+                const bottleVolume = pick([10, 20, 50, 100]);
+                const possibleDoseVolumes = [0.5, 1, 2, 5].filter(value => value <= bottleVolume);
+                const doseVolume = pick(possibleDoseVolumes);
+                const totalAmount = strength * bottleVolume;
+                const dose = strength * doseVolume;
+                correctAnswer = bottleVolume / doseVolume;
+                answerUnit = "hela doser";
+                problemText = `En flaska innehåller ${bottleVolume} mL läkemedel med styrkan ${formatNumber(strength)} mg/mL. Varje ordinerad dos är ${formatNumber(dose)} mg. Hur många hela doser räcker flaskan till?`;
+                calculationText = `${formatNumber(strength)} mg/mL × ${bottleVolume} mL = ${formatNumber(totalAmount)} mg<br>${formatNumber(totalAmount)} mg ÷ ${formatNumber(dose)} mg/dos = ${formatNumber(correctAnswer)} doser`;
+            } else {
+                const strength = pick(tabletStrengths);
+                const administrations = pick([2, 3, 4]);
+                const tabletsPerAdministration = pick([0.5, 1, 1.5, 2]);
+                const dosePerAdministration = strength * tabletsPerAdministration;
+                const dailyDose = dosePerAdministration * administrations;
+                correctAnswer = tabletsPerAdministration;
+                answerUnit = "tabletter per doseringstillfälle";
+                problemText = `En patient är ordinerad totalt ${formatNumber(dailyDose)} mg per dygn, fördelat på ${administrations} lika stora doseringstillfällen. Varje tablett innehåller ${formatNumber(strength)} mg. Hur många tabletter ska ges vid varje doseringstillfälle?`;
+                calculationText = `${formatNumber(dailyDose)} mg/dygn ÷ ${administrations} doseringstillfällen/dygn = ${formatNumber(dosePerAdministration)} mg/doseringstillfälle<br>${formatNumber(dosePerAdministration)} mg/doseringstillfälle ÷ ${formatNumber(strength)} mg/tablett = ${formatNumber(correctAnswer)} tabletter/doseringstillfälle`;
             }
 
             document.getElementById("problem").textContent = problemText;
@@ -113,7 +146,7 @@
                 document.getElementById("result").style.color = "#a33";
             }
 
-            document.getElementById("calculation").textContent = `Beräkning: ${calculationText}`;
+            document.getElementById("calculation").innerHTML = `<strong>Beräkning:</strong><br>${calculationText}`;
         }
 
         document.getElementById("studentAnswer").addEventListener("keydown", event => {
@@ -122,6 +155,6 @@
 
         window.onload = randomizeValues;
     </script>
-<script src="exam_bridge.js?v=20260826-10"></script>
+<script src="exam_bridge.js?v=20260826-11"></script>
 </body>
 </html>
