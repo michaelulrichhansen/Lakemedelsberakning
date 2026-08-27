@@ -426,6 +426,19 @@
                 return { value: match[1], numeratorUnit: match[2].trim(), denominatorUnit: match[3].trim() };
             };
 
+            const proportionEquations = (leftTop, rightTop, leftBottom, resultText) => {
+                const numberPart = value => {
+                    const match = value.trim().match(/^[-+]?\d+(?:[.,]\d+)?/);
+                    return match ? match[0] : value.trim();
+                };
+                const a = numberPart(leftTop);
+                const b = numberPart(rightTop);
+                const c = numberPart(leftBottom);
+                return `<div>${escapeHtml(leftTop)} : ${escapeHtml(rightTop)} = ${escapeHtml(leftBottom)} : x</div>` +
+                    `<div>${escapeHtml(a)} × x = ${escapeHtml(b)} × ${escapeHtml(c)}</div>` +
+                    `<div>x = (${escapeHtml(b)} × ${escapeHtml(c)}) ÷ ${escapeHtml(a)} = ${escapeHtml(resultText)}</div>`;
+            };
+
             const proportionStepHtml = step => {
                 const factorMatch = step.match(/^(.*?)\s+×\s+(.+?)\/(\s*[-+]?\d+(?:[.,]\d+)?\s+[A-Za-zÅÄÖåäöµ²]+)\s*=\s*(.+)$/);
                 if (factorMatch) {
@@ -433,11 +446,14 @@
                     const numerator = numeratorText.trim().match(/^([-+]?\d+(?:[.,]\d+)?)\s*(.*)$/);
                     if (numerator && Number(numerator[1].replace(",", ".")) === 1 && !numerator[2].trim()) {
                         const denominatorUnit = denominatorText.trim().replace(/^[-+]?\d+(?:[.,]\d+)?\s*/, "");
-                        return tableHtml(denominatorText.trim(), leftSide.trim(), `1 ${denominatorUnit}`.trim(), "x") +
-                            `<div>x = ${escapeHtml(resultText)}</div>`;
+                        const leftTop = denominatorText.trim();
+                        const rightTop = leftSide.trim();
+                        const leftBottom = `1 ${denominatorUnit}`.trim();
+                        return tableHtml(leftTop, rightTop, leftBottom, "x") +
+                            proportionEquations(leftTop, rightTop, leftBottom, resultText);
                     }
                     return tableHtml(denominatorText.trim(), numeratorText.trim(), leftSide.trim(), "x") +
-                        `<div>x = ${escapeHtml(resultText)}</div>`;
+                        proportionEquations(denominatorText.trim(), numeratorText.trim(), leftSide.trim(), resultText);
                 }
 
                 const divisionMatch = step.match(/^(.*?)\s+÷\s+(.+?)\s*=\s*(.+)$/);
@@ -445,12 +461,15 @@
                     const [, leftSide, divisor, resultText] = divisionMatch;
                     const compositeDivisor = splitCompositeQuantity(divisor);
                     if (compositeDivisor) {
-                        return tableHtml(`${compositeDivisor.value} ${compositeDivisor.numeratorUnit}`, `1 ${compositeDivisor.denominatorUnit}`, leftSide.trim(), "x") +
-                            `<div>x = ${escapeHtml(resultText)}</div>`;
+                        const leftTop = `${compositeDivisor.value} ${compositeDivisor.numeratorUnit}`;
+                        const rightTop = `1 ${compositeDivisor.denominatorUnit}`;
+                        return tableHtml(leftTop, rightTop, leftSide.trim(), "x") +
+                            proportionEquations(leftTop, rightTop, leftSide.trim(), resultText);
                     }
                     const divisorUnit = divisor.trim().replace(/^[-+]?\d+(?:[.,]\d+)?\s*/, "");
-                    return tableHtml(divisor.trim(), leftSide.trim(), `1 ${divisorUnit}`.trim(), "x") +
-                        `<div>x = ${escapeHtml(resultText)}</div>`;
+                    const leftBottom = `1 ${divisorUnit}`.trim();
+                    return tableHtml(divisor.trim(), leftSide.trim(), leftBottom, "x") +
+                        proportionEquations(divisor.trim(), leftSide.trim(), leftBottom, resultText);
                 }
 
                 const multiplicationMatch = step.match(/^(.*?)\s+×\s+(.+?)\s*=\s*(.+)$/);
@@ -458,13 +477,17 @@
                     const [, leftSide, multiplier, resultText] = multiplicationMatch;
                     const compositeMultiplier = splitCompositeQuantity(multiplier);
                     if (compositeMultiplier) {
-                        return tableHtml(`1 ${compositeMultiplier.denominatorUnit}`, `${compositeMultiplier.value} ${compositeMultiplier.numeratorUnit}`, leftSide.trim(), "x") +
-                            `<div>x = ${escapeHtml(resultText)}</div>`;
+                        const leftTop = `1 ${compositeMultiplier.denominatorUnit}`;
+                        const rightTop = `${compositeMultiplier.value} ${compositeMultiplier.numeratorUnit}`;
+                        return tableHtml(leftTop, rightTop, leftSide.trim(), "x") +
+                            proportionEquations(leftTop, rightTop, leftSide.trim(), resultText);
                     }
                     const compositeLeft = splitCompositeQuantity(leftSide);
                     if (compositeLeft) {
-                        return tableHtml(`1 ${compositeLeft.denominatorUnit}`, `${compositeLeft.value} ${compositeLeft.numeratorUnit}`, multiplier.trim(), "x") +
-                            `<div>x = ${escapeHtml(resultText)}</div>`;
+                        const leftTop = `1 ${compositeLeft.denominatorUnit}`;
+                        const rightTop = `${compositeLeft.value} ${compositeLeft.numeratorUnit}`;
+                        return tableHtml(leftTop, rightTop, multiplier.trim(), "x") +
+                            proportionEquations(leftTop, rightTop, multiplier.trim(), resultText);
                     }
                     return null;
                 }
