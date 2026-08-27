@@ -509,7 +509,7 @@
                 document.getElementById("genericMethodChooser")?.remove();
 
                 const proportionSteps = steps.map(proportionStepHtml);
-                const hasProportion = proportionSteps.every(Boolean);
+                const hasProportion = proportionSteps.some(Boolean);
 
                 const chooser = document.createElement("div");
                 chooser.id = "genericMethodChooser";
@@ -522,7 +522,9 @@
                     steps.map((step, index) => `<div><strong>Steg ${index + 1}:</strong> ${dimensionalStepHtml(step)}</div>`).join("") +
                     `<div style="margin-top:8px"><strong>Svar:</strong> ${escapeHtml(answer)}</div></div>` +
                     (hasProportion ? `<div class="generic-method-panel" data-panel="proportion"><strong>Proportionsmetoden</strong>` +
-                    proportionSteps.map((step, index) => `<div style="margin-top:8px"><strong>Steg ${index + 1}:</strong>${step}</div>`).join("") +
+                    proportionSteps.map((step, index) => step
+                        ? `<div style="margin-top:8px"><strong>Steg ${index + 1}:</strong>${step}</div>`
+                        : `<div style="margin-top:8px"><strong>Steg ${index + 1} – jämförelse eller vanlig beräkning:</strong> ${escapeHtml(steps[index])}</div>`).join("") +
                     `<div style="margin-top:8px"><strong>Svar:</strong> ${escapeHtml(answer)}</div></div>` : "");
 
                 const selectMethod = method => {

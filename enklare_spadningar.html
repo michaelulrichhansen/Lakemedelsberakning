@@ -72,10 +72,11 @@
 
         const fraction = (top, bottom) => `<span class="fraction"><span class="top">${top}</span><span class="bottom">${bottom}</span></span>`;
         const dilutionTable = (beforeStrength, beforeVolume, afterStrength, afterVolume) =>
-            `<table class="dilution-table"><tr><th></th><th>Före spädning</th><th>Efter spädning</th></tr>` +
-            `<tr><th>Styrka</th><td>${beforeStrength}</td><td>${afterStrength}</td></tr>` +
-            `<tr><th>Volym</th><td>${beforeVolume}</td><td>${afterVolume}</td></tr></table>` +
+            `<table class="dilution-table"><tr><th></th><th>Styrka</th><th>Volym</th></tr>` +
+            `<tr><th>Före spädning</th><td>${beforeStrength}</td><td>${beforeVolume}</td></tr>` +
+            `<tr><th>Efter spädning</th><td>${afterStrength}</td><td>${afterVolume}</td></tr></table>` +
             `<div><strong>Omvänt proportionellt samband:</strong> när styrkan minskar ökar volymen. Läkemedelsmängden är oförändrad.</div>` +
+            `<div><strong>Radvis multiplikation:</strong> styrka × volym är lika före och efter spädning.</div>` +
             `<div>C<sub>före</sub> × V<sub>före</sub> = C<sub>efter</sub> × V<sub>efter</sub></div>`;
 
         function showSolutionMethod(method) {
@@ -177,6 +178,7 @@
 
         window.onload = randomizeValues;
     </script>
-<script src="exam_bridge.js?v=20260826-14"></script>
+<script src="exam_bridge.js?v=20260827-15"></script>
 </body>
 </html>
+
