@@ -78,9 +78,13 @@
         }
 
         function crossTable(leftHeading, rightHeading, leftKnown, rightKnown, leftUnknown, rightUnknown) {
+            const numberPart = value => (String(value).match(/[-+]?\d+(?:[.,]\d+)?/) || [String(value)])[0];
             return `<table class="proportion-table"><tr><th>${leftHeading}</th><th>${rightHeading}</th></tr>` +
                 `<tr><td>${leftKnown}</td><td>${rightKnown}</td></tr>` +
-                `<tr><td>${leftUnknown}</td><td>${rightUnknown}</td></tr></table>`;
+                `<tr><td>${leftUnknown}</td><td>${rightUnknown}</td></tr></table>` +
+                `<div><strong>Direkt proportionellt samband:</strong> motsvarande storheter placeras i samma kolumn.</div>` +
+                `<div>${leftKnown} : ${rightKnown} = ${leftUnknown} : ${rightUnknown}</div>` +
+                `<div>${numberPart(leftKnown)} × x = ${numberPart(rightKnown)} × ${numberPart(leftUnknown)}</div>`;
         }
 
         function showSolutionMethod(method) {
@@ -205,6 +209,6 @@
 
         randomizeCase();
     </script>
-<script src="exam_bridge.js?v=20260826-10"></script>
+<script src="exam_bridge.js?v=20260826-14"></script>
 </body>
 </html>

@@ -74,7 +74,9 @@
         const dilutionTable = (beforeStrength, beforeVolume, afterStrength, afterVolume) =>
             `<table class="dilution-table"><tr><th></th><th>Före spädning</th><th>Efter spädning</th></tr>` +
             `<tr><th>Styrka</th><td>${beforeStrength}</td><td>${afterStrength}</td></tr>` +
-            `<tr><th>Volym</th><td>${beforeVolume}</td><td>${afterVolume}</td></tr></table>`;
+            `<tr><th>Volym</th><td>${beforeVolume}</td><td>${afterVolume}</td></tr></table>` +
+            `<div><strong>Omvänt proportionellt samband:</strong> när styrkan minskar ökar volymen. Läkemedelsmängden är oförändrad.</div>` +
+            `<div>C<sub>före</sub> × V<sub>före</sub> = C<sub>efter</sub> × V<sub>efter</sub></div>`;
 
         function showSolutionMethod(method) {
             document.getElementById("calculation").style.display = method === "formula" ? "block" : "none";
@@ -107,7 +109,7 @@
                     `Du har ${originalVolume} mL läkemedel med styrkan ${originalStrength} mg/mL. Läkemedlet ska spädas till styrkan ${targetStrength} mg/mL. Hur många mL spädningsvätska ska tillsättas?`;
                 calculationText = `${originalStrength} mg/mL × ${originalVolume} mL = ${totalDose} mg<br>${totalDose} mg ÷ ${targetStrength} mg/mL = ${finalVolume} mL<br>${finalVolume} mL − ${originalVolume} mL = ${correctAnswer} mL`;
                 dimensionSolution = `<strong>Dimensionsanalys</strong><div><strong>Steg 1:</strong> ${fraction(`${originalStrength} mg`, `1 <span class="cancel-unit">mL</span>`)} × ${originalVolume} <span class="cancel-unit">mL</span> = ${totalDose} mg</div><div><strong>Steg 2:</strong> ${totalDose} <span class="cancel-unit">mg</span> × ${fraction(`1 mL`, `${targetStrength} <span class="cancel-unit">mg</span>`)} = ${finalVolume} mL</div><div><strong>Steg 3:</strong> ${finalVolume} mL − ${originalVolume} mL = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL spädningsvätska</div>`;
-                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, `${originalVolume} mL`, `${targetStrength} mg/mL`, "x mL")}<div>${originalStrength} × ${originalVolume} = ${targetStrength} × x</div><div>x = ${originalStrength} × ${originalVolume} ÷ ${targetStrength} = ${finalVolume} mL slutvolym</div><div>${finalVolume} mL − ${originalVolume} mL = ${correctAnswer} mL spädningsvätska</div><div><strong>Svar:</strong> ${correctAnswer} mL spädningsvätska</div>`;
+                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, `${originalVolume} mL`, `${targetStrength} mg/mL`, "x mL")}<div>${originalStrength} mg/mL × ${originalVolume} mL = ${targetStrength} mg/mL × x mL</div><div>x = (${originalStrength} mg/mL × ${originalVolume} mL) ÷ ${targetStrength} mg/mL = ${finalVolume} mL slutvolym</div><div>${finalVolume} mL − ${originalVolume} mL = ${correctAnswer} mL spädningsvätska</div><div><strong>Svar:</strong> ${correctAnswer} mL spädningsvätska</div>`;
             } else if (questionType === 1) {
                 correctAnswer = finalVolume;
                 answerUnit = "mL slutvolym";
@@ -115,7 +117,7 @@
                     `Du har ${originalVolume} mL läkemedel med styrkan ${originalStrength} mg/mL. Läkemedlet ska spädas till styrkan ${targetStrength} mg/mL. Vilken blir den totala slutvolymen i mL?`;
                 calculationText = `${originalStrength} mg/mL × ${originalVolume} mL = ${totalDose} mg<br>${totalDose} mg ÷ ${targetStrength} mg/mL = ${correctAnswer} mL`;
                 dimensionSolution = `<strong>Dimensionsanalys</strong><div><strong>Steg 1:</strong> ${fraction(`${originalStrength} mg`, `1 <span class="cancel-unit">mL</span>`)} × ${originalVolume} <span class="cancel-unit">mL</span> = ${totalDose} mg</div><div><strong>Steg 2:</strong> ${totalDose} <span class="cancel-unit">mg</span> × ${fraction(`1 mL`, `${targetStrength} <span class="cancel-unit">mg</span>`)} = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL</div>`;
-                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, `${originalVolume} mL`, `${targetStrength} mg/mL`, "x mL")}<div>${originalStrength} × ${originalVolume} = ${targetStrength} × x</div><div>x = ${originalStrength} × ${originalVolume} ÷ ${targetStrength} = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL</div>`;
+                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, `${originalVolume} mL`, `${targetStrength} mg/mL`, "x mL")}<div>${originalStrength} mg/mL × ${originalVolume} mL = ${targetStrength} mg/mL × x mL</div><div>x = (${originalStrength} mg/mL × ${originalVolume} mL) ÷ ${targetStrength} mg/mL = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL</div>`;
             } else if (questionType === 2) {
                 correctAnswer = targetStrength;
                 answerUnit = "mg/mL";
@@ -123,7 +125,7 @@
                     `Du har ${originalVolume} mL läkemedel med styrkan ${originalStrength} mg/mL och tillsätter ${diluentVolume} mL spädningsvätska. Vilken styrka i mg/mL får den färdigspädda lösningen?`;
                 calculationText = `${originalVolume} mL + ${diluentVolume} mL = ${finalVolume} mL<br>${originalStrength} mg/mL × ${originalVolume} mL = ${totalDose} mg<br>${totalDose} mg ÷ ${finalVolume} mL = ${correctAnswer} mg/mL`;
                 dimensionSolution = `<strong>Dimensionsanalys</strong><div><strong>Steg 1:</strong> ${originalVolume} mL + ${diluentVolume} mL = ${finalVolume} mL</div><div><strong>Steg 2:</strong> ${fraction(`${originalStrength} mg`, `1 <span class="cancel-unit">mL</span>`)} × ${originalVolume} <span class="cancel-unit">mL</span> = ${totalDose} mg</div><div><strong>Steg 3:</strong> ${totalDose} mg × ${fraction(`1`, `${finalVolume} mL`)} = ${correctAnswer} mg/mL</div><div><strong>Svar:</strong> ${correctAnswer} mg/mL</div>`;
-                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, `${originalVolume} mL`, "x mg/mL", `${finalVolume} mL`)}<div>${originalStrength} × ${originalVolume} = x × ${finalVolume}</div><div>x = ${originalStrength} × ${originalVolume} ÷ ${finalVolume} = ${correctAnswer} mg/mL</div><div><strong>Svar:</strong> ${correctAnswer} mg/mL</div>`;
+                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, `${originalVolume} mL`, "x mg/mL", `${finalVolume} mL`)}<div>${originalStrength} mg/mL × ${originalVolume} mL = x mg/mL × ${finalVolume} mL</div><div>x = (${originalStrength} mg/mL × ${originalVolume} mL) ÷ ${finalVolume} mL = ${correctAnswer} mg/mL</div><div><strong>Svar:</strong> ${correctAnswer} mg/mL</div>`;
             } else {
                 correctAnswer = originalVolume;
                 answerUnit = "mL läkemedel";
@@ -132,7 +134,7 @@
                 const requiredDose = targetStrength * finalVolume;
                 calculationText = `${targetStrength} mg/mL × ${finalVolume} mL = ${requiredDose} mg<br>${requiredDose} mg ÷ ${originalStrength} mg/mL = ${correctAnswer} mL`;
                 dimensionSolution = `<strong>Dimensionsanalys</strong><div><strong>Steg 1:</strong> ${fraction(`${targetStrength} mg`, `1 <span class="cancel-unit">mL</span>`)} × ${finalVolume} <span class="cancel-unit">mL</span> = ${requiredDose} mg</div><div><strong>Steg 2:</strong> ${requiredDose} <span class="cancel-unit">mg</span> × ${fraction(`1 mL`, `${originalStrength} <span class="cancel-unit">mg</span>`)} = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL</div>`;
-                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, "x mL", `${targetStrength} mg/mL`, `${finalVolume} mL`)}<div>${originalStrength} × x = ${targetStrength} × ${finalVolume}</div><div>x = ${targetStrength} × ${finalVolume} ÷ ${originalStrength} = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL</div>`;
+                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, "x mL", `${targetStrength} mg/mL`, `${finalVolume} mL`)}<div>${originalStrength} mg/mL × x mL = ${targetStrength} mg/mL × ${finalVolume} mL</div><div>x = (${targetStrength} mg/mL × ${finalVolume} mL) ÷ ${originalStrength} mg/mL = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL</div>`;
             }
 
             document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit} (heltal):`;
@@ -175,6 +177,6 @@
 
         window.onload = randomizeValues;
     </script>
-<script src="exam_bridge.js?v=20260826-10"></script>
+<script src="exam_bridge.js?v=20260826-14"></script>
 </body>
 </html>

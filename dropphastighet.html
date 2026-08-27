@@ -67,23 +67,26 @@
             answerDecimals = 0;
 
             if (questionType === 0) {
+                const totalDrops = volume * dropFactor;
                 correctAnswer = dropsPerMinute;
                 answerUnit = "droppar/minut";
                 document.getElementById("problemText").textContent =
                     `En patient ska få ${volume} mL infusionsvätska under ${time} minuter. Infusionsaggregatet ger ${dropFactor} droppar/mL. Vilken dropphastighet ska ställas in i droppar/minut?`;
-                calculationText = `${volume} mL × ${dropFactor} droppar/mL ÷ ${time} min = ${correctAnswer} droppar/minut`;
+                calculationText = `${volume} mL × ${dropFactor} droppar/mL = ${totalDrops} droppar<br>${totalDrops} droppar ÷ ${time} min = ${correctAnswer} droppar/minut`;
             } else if (questionType === 1) {
+                const totalDrops = dropsPerMinute * time;
                 correctAnswer = volume;
                 answerUnit = "mL";
                 document.getElementById("problemText").textContent =
                     `En infusion ges med ${dropsPerMinute} droppar/minut under ${time} minuter. Infusionsaggregatet ger ${dropFactor} droppar/mL. Hur stor volym i mL har administrerats?`;
-                calculationText = `${dropsPerMinute} droppar/min × ${time} min ÷ ${dropFactor} droppar/mL = ${correctAnswer} mL`;
+                calculationText = `${dropsPerMinute} droppar/min × ${time} min = ${totalDrops} droppar<br>${totalDrops} droppar ÷ ${dropFactor} droppar/mL = ${correctAnswer} mL`;
             } else if (questionType === 2) {
+                const totalDrops = volume * dropFactor;
                 correctAnswer = time;
                 answerUnit = "minuter";
                 document.getElementById("problemText").textContent =
                     `En patient ska få ${volume} mL infusionsvätska. Dropphastigheten är ${dropsPerMinute} droppar/minut och infusionsaggregatet ger ${dropFactor} droppar/mL. Hur många minuter tar infusionen?`;
-                calculationText = `${volume} mL × ${dropFactor} droppar/mL ÷ ${dropsPerMinute} droppar/min = ${correctAnswer} minuter`;
+                calculationText = `${volume} mL × ${dropFactor} droppar/mL = ${totalDrops} droppar<br>${totalDrops} droppar ÷ ${dropsPerMinute} droppar/min = ${correctAnswer} minuter`;
             } else {
                 const currentCase = pick(infusionFlowCases);
                 const volumeMl = currentCase.liters * 1000;
@@ -142,6 +145,6 @@
 
         window.onload = randomizeValues;
     </script>
-<script src="exam_bridge.js?v=20260826-10"></script>
+<script src="exam_bridge.js?v=20260826-14"></script>
 </body>
 </html>

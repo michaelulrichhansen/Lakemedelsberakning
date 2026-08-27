@@ -434,18 +434,25 @@
                 const a = numberPart(leftTop);
                 const b = numberPart(rightTop);
                 const c = numberPart(leftBottom);
-                return `<div>${escapeHtml(leftTop)} : ${escapeHtml(rightTop)} = ${escapeHtml(leftBottom)} : x</div>` +
+                return `<div style="margin-top:8px"><strong>Direkt proportionellt samband:</strong> motsvarande storheter placeras i samma kolumn.</div>` +
+                    `<div>${escapeHtml(leftTop)} : ${escapeHtml(rightTop)} = ${escapeHtml(leftBottom)} : x</div>` +
                     `<div>${escapeHtml(a)} × x = ${escapeHtml(b)} × ${escapeHtml(c)}</div>` +
                     `<div>x = (${escapeHtml(b)} × ${escapeHtml(c)}) ÷ ${escapeHtml(a)} = ${escapeHtml(resultText)}</div>`;
             };
 
             const proportionStepHtml = step => {
+                const singularUnit = unit => unit.trim()
+                    .replace(/^minuter$/i, "minut")
+                    .replace(/^timmar$/i, "timme")
+                    .replace(/^droppar$/i, "droppe")
+                    .replace(/^tabletter$/i, "tablett")
+                    .replace(/^inhalationer$/i, "inhalation");
                 const factorMatch = step.match(/^(.*?)\s+×\s+(.+?)\/(\s*[-+]?\d+(?:[.,]\d+)?\s+[A-Za-zÅÄÖåäöµ²]+)\s*=\s*(.+)$/);
                 if (factorMatch) {
                     const [, leftSide, numeratorText, denominatorText, resultText] = factorMatch;
                     const numerator = numeratorText.trim().match(/^([-+]?\d+(?:[.,]\d+)?)\s*(.*)$/);
                     if (numerator && Number(numerator[1].replace(",", ".")) === 1 && !numerator[2].trim()) {
-                        const denominatorUnit = denominatorText.trim().replace(/^[-+]?\d+(?:[.,]\d+)?\s*/, "");
+                        const denominatorUnit = singularUnit(denominatorText.trim().replace(/^[-+]?\d+(?:[.,]\d+)?\s*/, ""));
                         const leftTop = denominatorText.trim();
                         const rightTop = leftSide.trim();
                         const leftBottom = `1 ${denominatorUnit}`.trim();
@@ -466,7 +473,7 @@
                         return tableHtml(leftTop, rightTop, leftSide.trim(), "x") +
                             proportionEquations(leftTop, rightTop, leftSide.trim(), resultText);
                     }
-                    const divisorUnit = divisor.trim().replace(/^[-+]?\d+(?:[.,]\d+)?\s*/, "");
+                    const divisorUnit = singularUnit(divisor.trim().replace(/^[-+]?\d+(?:[.,]\d+)?\s*/, ""));
                     const leftBottom = `1 ${divisorUnit}`.trim();
                     return tableHtml(divisor.trim(), leftSide.trim(), leftBottom, "x") +
                         proportionEquations(divisor.trim(), leftSide.trim(), leftBottom, resultText);
