@@ -45,12 +45,12 @@
       { from: "mmol", to: "mol", factor: 0.001 },
       { from: "mmol", to: "µmol", factor: 1000 },
       { from: "µmol", to: "mmol", factor: 0.001 }
-      ,{ from: "g", to: "µg", factor: 1000000 }
-      ,{ from: "µg", to: "g", factor: 0.000001 }
-      ,{ from: "L", to: "µL", factor: 1000000 }
-      ,{ from: "µL", to: "L", factor: 0.000001 }
-      ,{ from: "mol", to: "µmol", factor: 1000000 }
-      ,{ from: "µmol", to: "mol", factor: 0.000001 }
+      ,{ from: "g", to: "µg", factor: 1000000, via: "mg" }
+      ,{ from: "µg", to: "g", factor: 0.000001, via: "mg" }
+      ,{ from: "L", to: "µL", factor: 1000000, via: "mL" }
+      ,{ from: "µL", to: "L", factor: 0.000001, via: "mL" }
+      ,{ from: "mol", to: "µmol", factor: 1000000, via: "mmol" }
+      ,{ from: "µmol", to: "mol", factor: 0.000001, via: "mmol" }
     ];
 
     let currentValue, currentConversion, correctAnswer, calculation;
@@ -71,7 +71,17 @@
       document.getElementById("answerLabel").textContent = `Ange ditt svar i ${currentConversion.to}:`;
       document.getElementById("userAnswer").placeholder = `Svar i ${currentConversion.to}`;
 
-      if (currentConversion.factor > 1) {
+      if (currentConversion.via && currentConversion.factor > 1) {
+        const intermediateValue = currentValue * 1000;
+        calculation =
+          `${formatNumber(currentValue)} ${currentConversion.from} × 1000 ${currentConversion.via}/1 ${currentConversion.from} = ${formatNumber(intermediateValue)} ${currentConversion.via}\n` +
+          `${formatNumber(intermediateValue)} ${currentConversion.via} × 1000 ${currentConversion.to}/1 ${currentConversion.via} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
+      } else if (currentConversion.via) {
+        const intermediateValue = currentValue / 1000;
+        calculation =
+          `${formatNumber(currentValue)} ${currentConversion.from} × 1 ${currentConversion.via}/1000 ${currentConversion.from} = ${formatNumber(intermediateValue)} ${currentConversion.via}\n` +
+          `${formatNumber(intermediateValue)} ${currentConversion.via} × 1 ${currentConversion.to}/1000 ${currentConversion.via} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
+      } else if (currentConversion.factor > 1) {
         calculation = `${formatNumber(currentValue)} ${currentConversion.from} × ${currentConversion.factor} ${currentConversion.to}/1 ${currentConversion.from} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
       } else {
         calculation = `${formatNumber(currentValue)} ${currentConversion.from} × 1 ${currentConversion.to}/${Math.round(1 / currentConversion.factor)} ${currentConversion.from} = ${formatNumber(correctAnswer)} ${currentConversion.to}`;
@@ -98,7 +108,7 @@
         ? "Rätt svar!"
         : `Fel svar. Det rätta svaret är ${formatNumber(correctAnswer)} ${currentConversion.to}.`;
       document.getElementById("response").style.color = isCorrect ? "#195" : "#a33";
-      document.getElementById("conversionSteps").textContent = `Beräkning: ${calculation}`;
+      document.getElementById("conversionSteps").textContent = `Beräkning:\n${calculation}`;
       document.getElementById("conversionSteps").style.display = "block";
     }
 
@@ -108,7 +118,7 @@
 
     window.onload = generateValues;
   </script>
-<script src="exam_bridge.js?v=20260827-15"></script>
+<script src="exam_bridge.js?v=20260905-18"></script>
 </body>
 </html>
 
