@@ -123,8 +123,10 @@
         if (card && !document.querySelector(".site-version")) {
             const version = document.createElement("p");
             version.className = "site-version";
-            version.textContent = "Senast uppdaterad augusti 2026";
+            version.innerHTML = 'Senast uppdaterad augusti 2026<br>Utvecklat av Michael Ulrich Hansen · <a href="mailto:michael.ulrich.hansen@mau.se">michael.ulrich.hansen@mau.se</a>';
             version.style.cssText = "margin:22px 0 0;color:#777;font-size:.85rem;text-align:center;";
+            const contactLink = version.querySelector("a");
+            if (contactLink) contactLink.style.cssText = "color:#1166cc;text-decoration:none;";
             card.appendChild(version);
         }
 
