@@ -549,6 +549,9 @@
                 chooser.querySelectorAll("[data-method]").forEach(button =>
                     button.addEventListener("click", () => selectMethod(button.dataset.method)));
                 calculationElement.insertAdjacentElement("afterend", chooser);
+                // En tidigare vald alternativ metod kan ha lämnat formellösningen
+                // dold. Varje ny rättning ska alltid börja med synlig formelmetod.
+                selectMethod("formula");
             };
 
             const formatCalculation = () => {
