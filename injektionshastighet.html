@@ -54,9 +54,11 @@
     </div>
 
     <script>
-        const ratesMgMin = [0.2, 0.25, 0.4, 0.5, 0.6, 0.75, 0.8, 1, 1.2, 1.5, 2];
         const strengthsMgMl = [2.5, 5, 10, 20, 25, 50];
         const timesMin = [5, 10, 15, 20, 25, 30];
+        const totalVolumesMl = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5];
+        const totalDosesMg = [5, 10, 15, 20, 25, 30, 40, 50];
+        const volumeRatesMlMin = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4];
         let correctAnswer = 0;
         let calcText = "";
         let answerUnit = "";
@@ -110,40 +112,50 @@
             const type = nextQuestionType;
             nextQuestionType = (nextQuestionType + 1) % 5;
             const strength = pick(strengthsMgMl);
-            const rate = pick(ratesMgMin);
             let problemText = "";
 
             if (type === 0) {
-                // mg/min + mg/mL + tid -> total mL
+                // Viktbaserad ordination -> dos -> volym -> volymhastighet.
                 const time = pick(timesMin);
-                const volumePerMinute = rate / strength;
-                correctAnswer = volumePerMinute * time;
-                answerUnit = "mL";
-                problemText = `En patient ska få en injektionshastighet på <strong>${formatNumber(rate)} mg/minut</strong>. Läkemedlet kommer i en styrka på <strong>${formatNumber(strength)} mg/mL</strong>. Efter <strong>${time} minuter</strong>, hur många <strong>mL</strong> av läkemedlet har patienten fått?`;
-                calcText = `${formatNumber(rate)} mg/min × 1 mL/${formatNumber(strength)} mg = ${formatNumber(volumePerMinute, 4)} mL/min<br>${formatNumber(volumePerMinute, 4)} mL/min × ${time} min = ${formatNumber(correctAnswer)} mL`;
-                dimensionSolution = `<strong>Dimensionsanalys</strong><div class="solution-step"><strong>Steg 1:</strong> ${formatNumber(rate)} <span class="cancel-unit">mg</span>/min × ${fraction(`1 mL`, `${formatNumber(strength)} <span class="cancel-unit">mg</span>`)} = ${formatNumber(volumePerMinute, 4)} mL/min</div><div class="solution-step"><strong>Steg 2:</strong> ${formatNumber(volumePerMinute, 4)} mL/<span class="cancel-unit">min</span> × ${time} <span class="cancel-unit">min</span> = ${formatNumber(correctAnswer)} mL</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL`;
-                proportionSolution = `<strong>Proportionsmetoden</strong><div class="solution-step"><strong>Steg 1:</strong>${crossTable("Dos", "Volym", `${formatNumber(strength)} mg`, "1 mL", `${formatNumber(rate)} mg/min`, "x mL/min")}x = ${formatNumber(rate)} × 1 ÷ ${formatNumber(strength)} = ${formatNumber(volumePerMinute, 4)} mL/min</div><div class="solution-step"><strong>Steg 2:</strong>${crossTable("Tid", "Volym", "1 min", `${formatNumber(volumePerMinute, 4)} mL`, `${time} min`, "x mL")}x = ${time} × ${formatNumber(volumePerMinute, 4)} ÷ 1 = ${formatNumber(correctAnswer)} mL</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL`;
-            } else if (type === 1) {
-                // mg/min + mg/mL -> mL/min
-                correctAnswer = rate / strength;
+                const weight = pick([50, 60, 70, 80, 90]);
+                const dosePerKg = pick([0.2, 0.4, 0.5, 0.8, 1]);
+                const totalDose = weight * dosePerKg;
+                const volume = totalDose / strength;
+                correctAnswer = volume / time;
                 answerUnit = "mL/min";
-                problemText = `Ett läkemedel ordineras med doshastigheten <strong>${formatNumber(rate)} mg/minut</strong>. Läkemedlets styrka är <strong>${formatNumber(strength)} mg/mL</strong>. Vilken volymhastighet ska användas, uttryckt i <strong>mL/minut</strong>?`;
-                calcText = `${formatNumber(rate)} mg/min × 1 mL/${formatNumber(strength)} mg = ${formatNumber(correctAnswer)} mL/min`;
-                dimensionSolution = `<strong>Dimensionsanalys</strong><div class="solution-step"><strong>Steg 1:</strong> ${formatNumber(rate)} <span class="cancel-unit">mg</span>/min × ${fraction(`1 mL`, `${formatNumber(strength)} <span class="cancel-unit">mg</span>`)} = ${formatNumber(correctAnswer)} mL/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL/min`;
-                proportionSolution = `<strong>Proportionsmetoden</strong><div class="solution-step">${crossTable("Dos", "Volym", `${formatNumber(strength)} mg`, "1 mL", `${formatNumber(rate)} mg/min`, "x mL/min")}x = ${formatNumber(rate)} × 1 ÷ ${formatNumber(strength)} = ${formatNumber(correctAnswer)} mL/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL/min`;
+                problemText = `En patient väger <strong>${weight} kg</strong> och ska få <strong>${formatNumber(dosePerKg)} mg/kg</strong> av ett läkemedel med styrkan <strong>${formatNumber(strength)} mg/mL</strong>. Dosen ska ges under <strong>${time} minuter</strong>. Vilken volymhastighet i <strong>mL/minut</strong> behövs?`;
+                calcText = `${weight} kg × ${formatNumber(dosePerKg)} mg/kg = ${formatNumber(totalDose)} mg<br>${formatNumber(totalDose)} mg ÷ ${formatNumber(strength)} mg/mL = ${formatNumber(volume, 4)} mL<br>${formatNumber(volume, 4)} mL ÷ ${time} min = ${formatNumber(correctAnswer)} mL/min`;
+                dimensionSolution = `<strong>Dimensionsanalys</strong><div class="solution-step"><strong>Steg 1:</strong> ${weight} <span class="cancel-unit">kg</span> × ${fraction(`${formatNumber(dosePerKg)} mg`, `1 <span class="cancel-unit">kg</span>`)} = ${formatNumber(totalDose)} mg</div><div class="solution-step"><strong>Steg 2:</strong> ${formatNumber(totalDose)} <span class="cancel-unit">mg</span> × ${fraction("1 mL", `${formatNumber(strength)} <span class="cancel-unit">mg</span>`)} = ${formatNumber(volume, 4)} mL</div><div class="solution-step"><strong>Steg 3:</strong> ${formatNumber(volume, 4)} mL × ${fraction("1", `${time} min`)} = ${formatNumber(correctAnswer)} mL/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL/min`;
+                proportionSolution = `<strong>Proportionsmetoden</strong><div class="solution-step"><strong>Steg 1:</strong>${crossTable("Vikt (kg)", "Dos (mg)", "1 kg", `${formatNumber(dosePerKg)} mg`, `${weight} kg`, "x mg")}x = ${formatNumber(dosePerKg)} × ${weight} ÷ 1 = ${formatNumber(totalDose)} mg</div><div class="solution-step"><strong>Steg 2:</strong>${crossTable("Dos (mg)", "Volym (mL)", `${formatNumber(strength)} mg`, "1 mL", `${formatNumber(totalDose)} mg`, "x mL")}x = ${formatNumber(totalDose)} × 1 ÷ ${formatNumber(strength)} = ${formatNumber(volume, 4)} mL</div><div class="solution-step"><strong>Steg 3:</strong>${crossTable("Tid (min)", "Volym (mL)", `${time} min`, `${formatNumber(volume, 4)} mL`, "1 min", "x mL")}x = ${formatNumber(volume, 4)} × 1 ÷ ${time} = ${formatNumber(correctAnswer)} mL/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL/min`;
+            } else if (type === 1) {
+                // Kroppsytebaserad ordination -> dos -> volym -> volymhastighet.
+                const time = pick(timesMin);
+                const area = pick([1.4, 1.5, 1.6, 1.8, 2]);
+                const dosePerArea = pick([10, 15, 20, 25, 30]);
+                const totalDose = area * dosePerArea;
+                const volume = totalDose / strength;
+                correctAnswer = volume / time;
+                answerUnit = "mL/min";
+                problemText = `En patient har en kroppsyta på <strong>${formatNumber(area)} m²</strong> och ordineras <strong>${dosePerArea} mg/m²</strong>. Läkemedlets styrka är <strong>${formatNumber(strength)} mg/mL</strong> och dosen ska ges under <strong>${time} minuter</strong>. Vilken volymhastighet i <strong>mL/minut</strong> behövs?`;
+                calcText = `${formatNumber(area)} m² × ${dosePerArea} mg/m² = ${formatNumber(totalDose)} mg<br>${formatNumber(totalDose)} mg ÷ ${formatNumber(strength)} mg/mL = ${formatNumber(volume, 4)} mL<br>${formatNumber(volume, 4)} mL ÷ ${time} min = ${formatNumber(correctAnswer)} mL/min`;
+                dimensionSolution = `<strong>Dimensionsanalys</strong><div class="solution-step"><strong>Steg 1:</strong> ${formatNumber(area)} <span class="cancel-unit">m²</span> × ${fraction(`${dosePerArea} mg`, `1 <span class="cancel-unit">m²</span>`)} = ${formatNumber(totalDose)} mg</div><div class="solution-step"><strong>Steg 2:</strong> ${formatNumber(totalDose)} <span class="cancel-unit">mg</span> × ${fraction("1 mL", `${formatNumber(strength)} <span class="cancel-unit">mg</span>`)} = ${formatNumber(volume, 4)} mL</div><div class="solution-step"><strong>Steg 3:</strong> ${formatNumber(volume, 4)} mL × ${fraction("1", `${time} min`)} = ${formatNumber(correctAnswer)} mL/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL/min`;
+                proportionSolution = `<strong>Proportionsmetoden</strong><div class="solution-step"><strong>Steg 1:</strong>${crossTable("Kroppsyta (m²)", "Dos (mg)", "1 m²", `${dosePerArea} mg`, `${formatNumber(area)} m²`, "x mg")}x = ${dosePerArea} × ${formatNumber(area)} ÷ 1 = ${formatNumber(totalDose)} mg</div><div class="solution-step"><strong>Steg 2:</strong>${crossTable("Dos (mg)", "Volym (mL)", `${formatNumber(strength)} mg`, "1 mL", `${formatNumber(totalDose)} mg`, "x mL")}x = ${formatNumber(totalDose)} × 1 ÷ ${formatNumber(strength)} = ${formatNumber(volume, 4)} mL</div><div class="solution-step"><strong>Steg 3:</strong>${crossTable("Tid (min)", "Volym (mL)", `${time} min`, `${formatNumber(volume, 4)} mL`, "1 min", "x mL")}x = ${formatNumber(volume, 4)} × 1 ÷ ${time} = ${formatNumber(correctAnswer)} mL/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL/min`;
             } else if (type === 2) {
-                // mL/min + mg/mL -> mg/min
-                const volumeRate = rate / strength;
-                correctAnswer = volumeRate * strength;
-                answerUnit = "mg/min";
-                problemText = `Ett läkemedel med styrkan <strong>${formatNumber(strength)} mg/mL</strong> ges med volymhastigheten <strong>${formatNumber(volumeRate, 4)} mL/minut</strong>. Hur många <strong>mg/minut</strong> får patienten?`;
-                calcText = `${formatNumber(volumeRate, 4)} mL/min × ${formatNumber(strength)} mg/1 mL = ${formatNumber(correctAnswer)} mg/min`;
-                dimensionSolution = `<strong>Dimensionsanalys</strong><div class="solution-step"><strong>Steg 1:</strong> ${formatNumber(volumeRate, 4)} <span class="cancel-unit">mL</span>/min × ${fraction(`${formatNumber(strength)} mg`, `1 <span class="cancel-unit">mL</span>`)} = ${formatNumber(correctAnswer)} mg/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mg/min`;
-                proportionSolution = `<strong>Proportionsmetoden</strong><div class="solution-step">${crossTable("Volym", "Dos", "1 mL", `${formatNumber(strength)} mg`, `${formatNumber(volumeRate, 4)} mL/min`, "x mg/min")}x = ${formatNumber(volumeRate, 4)} × ${formatNumber(strength)} ÷ 1 = ${formatNumber(correctAnswer)} mg/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mg/min`;
+                // Ordinerad total dos -> total volym -> volym per minut.
+                const time = pick(timesMin);
+                const possibleDoses = totalDosesMg.filter(dose => dose / strength / time >= 0.01);
+                const totalDose = pick(possibleDoses);
+                const totalVolume = totalDose / strength;
+                correctAnswer = totalVolume / time;
+                answerUnit = "mL/min";
+                problemText = `En patient ska få totalt <strong>${totalDose} mg</strong> av ett läkemedel med styrkan <strong>${formatNumber(strength)} mg/mL</strong> under <strong>${time} minuter</strong>. Vilken volymhastighet i <strong>mL/minut</strong> motsvarar detta?`;
+                calcText = `${totalDose} mg ÷ ${formatNumber(strength)} mg/mL = ${formatNumber(totalVolume, 4)} mL<br>${formatNumber(totalVolume, 4)} mL ÷ ${time} min = ${formatNumber(correctAnswer)} mL/min`;
+                dimensionSolution = `<strong>Dimensionsanalys</strong><div class="solution-step"><strong>Steg 1:</strong> ${totalDose} <span class="cancel-unit">mg</span> × ${fraction("1 mL", `${formatNumber(strength)} <span class="cancel-unit">mg</span>`)} = ${formatNumber(totalVolume, 4)} mL</div><div class="solution-step"><strong>Steg 2:</strong> ${formatNumber(totalVolume, 4)} mL × ${fraction("1", `${time} min`)} = ${formatNumber(correctAnswer)} mL/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL/min`;
+                proportionSolution = `<strong>Proportionsmetoden</strong><div class="solution-step"><strong>Steg 1:</strong>${crossTable("Dos (mg)", "Volym (mL)", `${formatNumber(strength)} mg`, "1 mL", `${totalDose} mg`, "x mL")}x = ${totalDose} × 1 ÷ ${formatNumber(strength)} = ${formatNumber(totalVolume, 4)} mL</div><div class="solution-step"><strong>Steg 2:</strong>${crossTable("Tid (min)", "Volym (mL)", `${time} min`, `${formatNumber(totalVolume, 4)} mL`, "1 min", "x mL")}x = ${formatNumber(totalVolume, 4)} × 1 ÷ ${time} = ${formatNumber(correctAnswer)} mL/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL/min`;
             } else if (type === 3) {
                 // total mL + mg/mL + tid -> mg/min
                 const time = pick(timesMin);
-                const totalVolume = (rate / strength) * time;
+                const totalVolume = pick(totalVolumesMl);
                 const totalDose = totalVolume * strength;
                 correctAnswer = totalDose / time;
                 answerUnit = "mg/min";
@@ -152,16 +164,18 @@
                 dimensionSolution = `<strong>Dimensionsanalys</strong><div class="solution-step"><strong>Steg 1:</strong> ${formatNumber(totalVolume)} <span class="cancel-unit">mL</span> × ${fraction(`${formatNumber(strength)} mg`, `1 <span class="cancel-unit">mL</span>`)} = ${formatNumber(totalDose)} mg</div><div class="solution-step"><strong>Steg 2:</strong> ${formatNumber(totalDose)} mg × ${fraction("1", `${time} min`)} = ${formatNumber(correctAnswer)} mg/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mg/min`;
                 proportionSolution = `<strong>Proportionsmetoden</strong><div class="solution-step"><strong>Steg 1:</strong>${crossTable("mL", "mg", "1", formatNumber(strength), formatNumber(totalVolume), "x")}x = ${formatNumber(totalVolume)} × ${formatNumber(strength)} ÷ 1 = ${formatNumber(totalDose)} mg</div><div class="solution-step"><strong>Steg 2:</strong>${crossTable("min", "mg", time, formatNumber(totalDose), "1", "x")}x = ${formatNumber(totalDose)} × 1 ÷ ${time} = ${formatNumber(correctAnswer)} mg/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mg/min`;
             } else {
-                // total mL + tid -> mL/min
+                // Dygnsdos -> dos per administrering -> volym -> volymhastighet.
                 const time = pick(timesMin);
-                const volumeRate = rate / strength;
-                const totalVolume = volumeRate * time;
-                correctAnswer = totalVolume / time;
+                const administrations = pick([2, 3, 4]);
+                const dosePerAdministration = pick([10, 15, 20, 30, 40]);
+                const dailyDose = administrations * dosePerAdministration;
+                const volume = dosePerAdministration / strength;
+                correctAnswer = volume / time;
                 answerUnit = "mL/min";
-                problemText = `En patient har fått <strong>${formatNumber(totalVolume)} mL</strong> läkemedel under <strong>${time} minuter</strong>. Vilken volymhastighet i <strong>mL/minut</strong> har använts?`;
-                calcText = `${formatNumber(totalVolume)} mL × 1/${time} min = ${formatNumber(correctAnswer)} mL/min`;
-                dimensionSolution = `<strong>Dimensionsanalys</strong><div class="solution-step"><strong>Steg 1:</strong> ${formatNumber(totalVolume)} mL × ${fraction("1", `${time} min`)} = ${formatNumber(correctAnswer)} mL/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL/min`;
-                proportionSolution = `<strong>Proportionsmetoden</strong><div class="solution-step">${crossTable("min", "mL", time, formatNumber(totalVolume), "1", "x")}x = ${formatNumber(totalVolume)} × 1 ÷ ${time} = ${formatNumber(correctAnswer)} mL/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL/min`;
+                problemText = `En patient är ordinerad <strong>${dailyDose} mg per dygn</strong> fördelat på <strong>${administrations} lika stora administreringar</strong>. Läkemedlets styrka är <strong>${formatNumber(strength)} mg/mL</strong>. Varje dos ges under <strong>${time} minuter</strong>. Vilken volymhastighet i <strong>mL/minut</strong> behövs för en administrering?`;
+                calcText = `${dailyDose} mg ÷ ${administrations} administreringar = ${dosePerAdministration} mg per administrering<br>${dosePerAdministration} mg ÷ ${formatNumber(strength)} mg/mL = ${formatNumber(volume, 4)} mL<br>${formatNumber(volume, 4)} mL ÷ ${time} min = ${formatNumber(correctAnswer)} mL/min`;
+                dimensionSolution = `<strong>Dimensionsanalys</strong><div class="solution-step"><strong>Steg 1:</strong> ${dailyDose} mg/<span class="cancel-unit">dygn</span> × ${fraction(`1 <span class="cancel-unit">dygn</span>`, `${administrations} administreringar`)} = ${dosePerAdministration} mg/administrering</div><div class="solution-step"><strong>Steg 2:</strong> Per administrering: ${dosePerAdministration} <span class="cancel-unit">mg</span> × ${fraction("1 mL", `${formatNumber(strength)} <span class="cancel-unit">mg</span>`)} = ${formatNumber(volume, 4)} mL</div><div class="solution-step"><strong>Steg 3:</strong> ${formatNumber(volume, 4)} mL × ${fraction("1", `${time} min`)} = ${formatNumber(correctAnswer)} mL/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL/min`;
+                proportionSolution = `<strong>Proportionsmetoden</strong><div class="solution-step"><strong>Steg 1:</strong>${crossTable("Administreringar", "Dos (mg)", `${administrations}`, `${dailyDose} mg`, "1", "x mg")}x = ${dailyDose} × 1 ÷ ${administrations} = ${dosePerAdministration} mg</div><div class="solution-step"><strong>Steg 2:</strong>${crossTable("Dos (mg)", "Volym (mL)", `${formatNumber(strength)} mg`, "1 mL", `${dosePerAdministration} mg`, "x mL")}x = ${dosePerAdministration} × 1 ÷ ${formatNumber(strength)} = ${formatNumber(volume, 4)} mL</div><div class="solution-step"><strong>Steg 3:</strong>${crossTable("Tid (min)", "Volym (mL)", `${time} min`, `${formatNumber(volume, 4)} mL`, "1 min", "x mL")}x = ${formatNumber(volume, 4)} × 1 ÷ ${time} = ${formatNumber(correctAnswer)} mL/min</div><strong>Svar:</strong> ${formatNumber(correctAnswer)} mL/min`;
             }
 
             document.getElementById("problem").innerHTML = problemText;
