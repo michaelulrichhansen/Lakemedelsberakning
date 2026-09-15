@@ -62,6 +62,8 @@
             { original: 100, target: 10 },
             { original: 100, target: 20 }
         ];
+        // Endast verkliga spädningar: högre styrka före och lägre styrka efter.
+        const validConcentrationPairs = concentrationPairs.filter(pair => pair.original > pair.target);
         const originalVolumes = [1, 2, 5, 10, 20];
 
         let originalStrength, targetStrength, originalVolume, finalVolume, diluentVolume;
@@ -94,14 +96,17 @@
         }
 
         function randomizeValues() {
-            const pair = pick(concentrationPairs);
+            const pair = pick(validConcentrationPairs);
             originalStrength = pair.original;
             targetStrength = pair.target;
             originalVolume = pick(originalVolumes);
             const totalDose = originalStrength * originalVolume;
             finalVolume = totalDose / targetStrength;
             diluentVolume = finalVolume - originalVolume;
-            questionType = Math.floor(Math.random() * 4);
+            if (!(originalStrength > targetStrength && finalVolume > originalVolume && diluentVolume > 0)) {
+                throw new Error("Ogiltig spädning: styrkan ska minska och volymen ska öka.");
+            }
+            questionType = Math.floor(Math.random() * 3);
 
             if (questionType === 0) {
                 correctAnswer = diluentVolume;
@@ -127,15 +132,6 @@
                 calculationText = `${originalVolume} mL + ${diluentVolume} mL = ${finalVolume} mL<br>${originalStrength} mg/mL × ${originalVolume} mL = ${totalDose} mg<br>${totalDose} mg ÷ ${finalVolume} mL = ${correctAnswer} mg/mL`;
                 dimensionSolution = `<strong>Dimensionsanalys</strong><div><strong>Steg 1:</strong> ${originalVolume} mL + ${diluentVolume} mL = ${finalVolume} mL</div><div><strong>Steg 2:</strong> ${fraction(`${originalStrength} mg`, `1 <span class="cancel-unit">mL</span>`)} × ${originalVolume} <span class="cancel-unit">mL</span> = ${totalDose} mg</div><div><strong>Steg 3:</strong> ${totalDose} mg × ${fraction(`1`, `${finalVolume} mL`)} = ${correctAnswer} mg/mL</div><div><strong>Svar:</strong> ${correctAnswer} mg/mL</div>`;
                 proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, `${originalVolume} mL`, "x mg/mL", `${finalVolume} mL`)}<div>${originalStrength} mg/mL × ${originalVolume} mL = x mg/mL × ${finalVolume} mL</div><div>x = (${originalStrength} mg/mL × ${originalVolume} mL) ÷ ${finalVolume} mL = ${correctAnswer} mg/mL</div><div><strong>Svar:</strong> ${correctAnswer} mg/mL</div>`;
-            } else {
-                correctAnswer = originalVolume;
-                answerUnit = "mL läkemedel";
-                document.getElementById("question").textContent =
-                    `Du ska bereda ${finalVolume} mL lösning med styrkan ${targetStrength} mg/mL. Det koncentrerade läkemedlet har styrkan ${originalStrength} mg/mL. Hur många mL av det koncentrerade läkemedlet behövs?`;
-                const requiredDose = targetStrength * finalVolume;
-                calculationText = `${targetStrength} mg/mL × ${finalVolume} mL = ${requiredDose} mg<br>${requiredDose} mg ÷ ${originalStrength} mg/mL = ${correctAnswer} mL`;
-                dimensionSolution = `<strong>Dimensionsanalys</strong><div><strong>Steg 1:</strong> ${fraction(`${targetStrength} mg`, `1 <span class="cancel-unit">mL</span>`)} × ${finalVolume} <span class="cancel-unit">mL</span> = ${requiredDose} mg</div><div><strong>Steg 2:</strong> ${requiredDose} <span class="cancel-unit">mg</span> × ${fraction(`1 mL`, `${originalStrength} <span class="cancel-unit">mg</span>`)} = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL</div>`;
-                proportionSolution = `<strong>Proportionsmetoden</strong>${dilutionTable(`${originalStrength} mg/mL`, "x mL", `${targetStrength} mg/mL`, `${finalVolume} mL`)}<div>${originalStrength} mg/mL × x mL = ${targetStrength} mg/mL × ${finalVolume} mL</div><div>Först mängden läkemedel: ${targetStrength} mg/mL × ${finalVolume} mL = ${requiredDose} mg</div><div>x = ${requiredDose} mg ÷ ${originalStrength} mg/mL = ${correctAnswer} mL</div><div><strong>Svar:</strong> ${correctAnswer} mL</div>`;
             }
 
             document.getElementById("answerLabel").textContent = `Ange ditt svar i ${answerUnit} (heltal):`;
